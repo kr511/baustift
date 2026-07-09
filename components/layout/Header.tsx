@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LogoutButton } from "@/components/auth/LogoutButton";
 
 const navItems = [
   { href: "/berichte", label: "Übersicht" },
@@ -30,6 +31,7 @@ export function Header() {
                 {item.label}
               </Link>
             ))}
+            <LogoutButton />
           </nav>
         </div>
       </header>
