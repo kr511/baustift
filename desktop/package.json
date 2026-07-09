@@ -5,6 +5,7 @@
   "author": "Elias Kümmel <eliaskummel@gmail.com>",
   "main": "main.js",
   "private": true,
+  "license": "SEE LICENSE IN ../LICENSE",
   "scripts": {
     "start": "electron .",
     "dist:win": "electron-builder --win",
@@ -17,6 +18,7 @@
   "build": {
     "appId": "com.eliaskummel.tagesberichte",
     "productName": "Tagesberichte",
+    "copyright": "Copyright © 2026 Elias Kümmel. Alle Rechte vorbehalten.",
     "files": ["main.js", "error.html"],
     "directories": {
       "output": "dist"

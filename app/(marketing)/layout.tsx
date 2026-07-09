@@ -51,14 +51,28 @@ export default function MarketingLayout({
       <footer className="bg-graphite border-t border-ink">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-4 py-6 sm:px-6">
           <span className="label-tag text-white/60">
-            © 2026 Elias Kümmel — Tagesberichte für Swietelsky Faber
+            © 2026 Elias Kümmel — Alle Rechte vorbehalten
           </span>
-          <a
-            href={`mailto:${CONTACT_EMAIL}`}
-            className="label-tag text-white/80 transition-colors hover:text-amber"
-          >
-            {CONTACT_EMAIL}
-          </a>
+          <nav className="flex flex-wrap items-center gap-4">
+            <Link
+              href="/impressum"
+              className="label-tag text-white/80 transition-colors hover:text-amber"
+            >
+              Impressum
+            </Link>
+            <Link
+              href="/datenschutz"
+              className="label-tag text-white/80 transition-colors hover:text-amber"
+            >
+              Datenschutz
+            </Link>
+            <a
+              href={`mailto:${CONTACT_EMAIL}`}
+              className="label-tag text-white/80 transition-colors hover:text-amber"
+            >
+              {CONTACT_EMAIL}
+            </a>
+          </nav>
         </div>
       </footer>
     </>

@@ -1,5 +1,7 @@
 # Tagesberichte — Swietelsky Faber
 
+Copyright © 2026 Elias Kümmel. Alle Rechte vorbehalten — proprietäre Software, siehe [LICENSE](./LICENSE). Dieses Repository ist öffentlich, um die Windows-Downloads (Releases) bereitzustellen; es gewährt keine Rechte am Quellcode.
+
 Web-App, die aus Stichpunkten fertige Bautagesberichte erstellt. Poliere/Bauleiter erfassen Baustelle, Personal, Material, Wetter und ein paar Stichpunkte — die KI formuliert daraus einen einheitlichen, professionellen Tagesbericht mit Druckansicht.
 
 ## Stack

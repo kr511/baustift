@@ -1,0 +1,58 @@
+PROPRIETÄRE LIZENZ / PROPRIETARY LICENSE
+
+Copyright (c) 2026 Elias Kümmel. Alle Rechte vorbehalten. / All rights reserved.
+
+--- Deutsch ---
+
+Dieser Quellcode und die zugehörige Software ("Tagesberichte") sind das
+alleinige geistige Eigentum von Elias Kümmel (eliaskummel@gmail.com).
+
+Die Veröffentlichung dieses Repositorys auf GitHub dient ausschließlich der
+Bereitstellung von Software-Downloads (Releases) und der Transparenz. Sie
+stellt KEINE Lizenzierung des Quellcodes dar.
+
+Ohne ausdrückliche schriftliche Genehmigung des Urhebers ist es NICHT
+gestattet:
+- den Quellcode oder Teile davon zu kopieren, zu verändern oder
+  weiterzuverbreiten,
+- die Software oder Teile davon in eigene Projekte zu übernehmen,
+- die Software kommerziell zu nutzen, weiterzuverkaufen oder zu lizenzieren,
+- abgeleitete Werke zu erstellen.
+
+Erlaubt ist:
+- das Herunterladen und Ausführen der offiziellen Releases (Windows-Exe)
+  durch autorisierte Nutzer,
+- das Ansehen des Quellcodes auf GitHub.
+
+Die Nutzung der gehosteten Anwendung und der Desktop-App ist nur Personen
+gestattet, denen der Urheber oder ein autorisierter Kunde Zugangsdaten
+bereitgestellt hat.
+
+DIE SOFTWARE WIRD OHNE JEDE GEWÄHRLEISTUNG BEREITGESTELLT, WEDER
+AUSDRÜCKLICH NOCH STILLSCHWEIGEND.
+
+--- English ---
+
+This source code and the associated software ("Tagesberichte") are the sole
+intellectual property of Elias Kümmel (eliaskummel@gmail.com).
+
+This repository is published on GitHub solely to distribute software
+downloads (releases) and for transparency. Publication does NOT constitute
+a license to the source code.
+
+Without the express written permission of the author, you may NOT:
+- copy, modify, or redistribute the source code or any part of it,
+- incorporate the software or parts of it into your own projects,
+- use the software commercially, resell, or sublicense it,
+- create derivative works.
+
+You may:
+- download and run the official releases (Windows exe) as an authorized
+  user,
+- view the source code on GitHub.
+
+Use of the hosted application and the desktop app is permitted only to
+persons who have been provided credentials by the author or an authorized
+customer.
+
+THE SOFTWARE IS PROVIDED WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
