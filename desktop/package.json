@@ -1,0 +1,44 @@
+{
+  "name": "tagesberichte-desktop",
+  "version": "1.0.0",
+  "description": "Desktop-Wrapper für die Swietelsky Faber Tagesberichte-App",
+  "author": "Elias Kümmel <eliaskummel@gmail.com>",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win",
+    "dist:linux": "electron-builder --linux"
+  },
+  "devDependencies": {
+    "electron": "^37.7.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.eliaskummel.tagesberichte",
+    "productName": "Tagesberichte",
+    "files": ["main.js", "error.html"],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "icon": "build/icon.png",
+      "target": ["nsis", "portable"]
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "artifactName": "Tagesberichte-Setup.exe",
+      "deleteAppDataOnUninstall": false
+    },
+    "portable": {
+      "artifactName": "Tagesberichte-Portable.exe"
+    },
+    "linux": {
+      "icon": "build/icon.png",
+      "target": ["AppImage"],
+      "category": "Office",
+      "artifactName": "Tagesberichte.AppImage"
+    }
+  }
+}

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <title>Keine Verbindung</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f4f0e6;
+      color: #1c1a17;
+      font-family: system-ui, sans-serif;
+    }
+    .box {
+      max-width: 420px;
+      padding: 2rem;
+      border: 1.5px solid #1c1a17;
+      background: #fffdf8;
+      text-align: center;
+    }
+    .stripe {
+      height: 6px;
+      margin-bottom: 1.5rem;
+      background-image: repeating-linear-gradient(-45deg, #e3a008 0, #e3a008 10px, #1c1a17 10px, #1c1a17 20px);
+    }
+    h1 { font-size: 1.3rem; margin: 0 0 0.5rem; }
+    p { color: #56514a; font-size: 0.95rem; margin: 0 0 1.5rem; }
+    button {
+      background: #e3a008;
+      color: #1c1a17;
+      border: 1.5px solid #1c1a17;
+      padding: 0.6rem 1.2rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="stripe"></div>
+    <h1>Keine Internetverbindung</h1>
+    <p>Die Tagesberichte-App braucht eine Internetverbindung. Bitte Verbindung prüfen und erneut versuchen.</p>
+    <button onclick="location.href='https://swietelsky-faber-tagesbericht.vercel.app'">Erneut versuchen</button>
+  </div>
+</body>
+</html>
