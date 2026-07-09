@@ -1,0 +1,200 @@
+@import "tailwindcss";
+
+:root {
+  --color-paper: #f4f0e6;
+  --color-paper-raised: #fffdf8;
+  --color-ink: #1c1a17;
+  --color-ink-soft: #56514a;
+  --color-graphite: #201e1b;
+  --color-graphite-raised: #2c2a26;
+  --color-line: #d8d0bf;
+  --color-line-strong: #1c1a17;
+  --color-amber: #e3a008;
+  --color-amber-ink: #1c1a17;
+  --color-safety-green: #26522f;
+  --color-safety-green-bg: #e3ead8;
+  --color-brick: #a3341f;
+  --color-brick-bg: #f3e2dc;
+}
+
+@theme inline {
+  --color-paper: var(--color-paper);
+  --color-paper-raised: var(--color-paper-raised);
+  --color-ink: var(--color-ink);
+  --color-ink-soft: var(--color-ink-soft);
+  --color-graphite: var(--color-graphite);
+  --color-graphite-raised: var(--color-graphite-raised);
+  --color-line: var(--color-line);
+  --color-line-strong: var(--color-line-strong);
+  --color-amber: var(--color-amber);
+  --color-amber-ink: var(--color-amber-ink);
+  --color-safety-green: var(--color-safety-green);
+  --color-safety-green-bg: var(--color-safety-green-bg);
+  --color-brick: var(--color-brick);
+  --color-brick-bg: var(--color-brick-bg);
+  --font-display: var(--font-shoulders);
+  --font-sans: var(--font-plex-sans);
+  --font-mono: var(--font-plex-mono);
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Faint site-plan grid on the working background — atmosphere, not noise. */
+.bg-blueprint {
+  background-image:
+    linear-gradient(var(--color-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-line) 1px, transparent 1px);
+  background-size: 28px 28px;
+  background-position: -1px -1px;
+}
+
+/* Hazard-stripe rule — used once per page as a signature accent, not decoration. */
+.hazard-rule {
+  height: 6px;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--color-amber) 0,
+    var(--color-amber) 10px,
+    var(--color-ink) 10px,
+    var(--color-ink) 20px
+  );
+}
+
+/* Registration tick-marks at card corners, like a technical drawing crop mark. */
+.ticked {
+  position: relative;
+}
+.ticked::before,
+.ticked::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+  border-color: var(--color-ink);
+}
+.ticked::before {
+  top: -1px;
+  left: -1px;
+  border-top: 2px solid;
+  border-left: 2px solid;
+}
+.ticked::after {
+  bottom: -1px;
+  right: -1px;
+  border-bottom: 2px solid;
+  border-right: 2px solid;
+}
+
+@layer components {
+  .label-tag {
+    font-family: var(--font-plex-mono), ui-monospace, monospace;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-ink-soft);
+  }
+
+  .field-input {
+    width: 100%;
+    border: 1.5px solid var(--color-line-strong);
+    background: var(--color-paper-raised);
+    color: var(--color-ink);
+    padding: 0.55rem 0.7rem;
+    font-size: 0.9375rem;
+    font-family: var(--font-plex-sans), sans-serif;
+  }
+  .field-input:focus {
+    outline: 2px solid var(--color-amber);
+    outline-offset: 1px;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    background: var(--color-amber);
+    color: var(--color-amber-ink);
+    border: 1.5px solid var(--color-ink);
+    padding: 0.6rem 1.15rem;
+    font-family: var(--font-plex-mono), monospace;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition:
+      transform 0.12s ease,
+      background 0.12s ease;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: #f0b02e;
+  }
+  .btn-primary:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+  .btn-primary:disabled {
+    opacity: 0.5;
+  }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    background: var(--color-paper-raised);
+    color: var(--color-ink);
+    border: 1.5px solid var(--color-ink);
+    padding: 0.6rem 1.15rem;
+    font-family: var(--font-plex-mono), monospace;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: background 0.12s ease;
+  }
+  .btn-secondary:hover:not(:disabled) {
+    background: var(--color-paper);
+  }
+  .btn-secondary:disabled {
+    opacity: 0.5;
+  }
+
+  .card {
+    background: var(--color-paper-raised);
+    border: 1.5px solid var(--color-line-strong);
+  }
+
+  .tag-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-family: var(--font-plex-mono), monospace;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.55rem;
+    border: 1.5px solid currentColor;
+  }
+}
+
+@media print {
+  @page {
+    margin: 16mm 16mm;
+  }
+
+  body {
+    background: #ffffff;
+    color: #000000;
+  }
+
+  .bg-blueprint {
+    background-image: none;
+  }
+}
