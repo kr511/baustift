@@ -21,7 +21,7 @@ export default function DatenschutzPage() {
           <section>
             <h2 className="label-tag mb-2">1. Verantwortlicher</h2>
             <p>
-              Elias Kümmel, [Straße Hausnummer], [PLZ Ort], Deutschland
+              Elias Kümmel, Wallstraße 50, 06780 Zörbig, Deutschland
               <br />
               E-Mail:{" "}
               <a href={`mailto:${CONTACT_EMAIL}`} className="underline">

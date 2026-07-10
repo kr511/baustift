@@ -23,9 +23,9 @@ export default function ImpressumPage() {
             <p>
               Elias Kümmel
               <br />
-              [Straße Hausnummer]
+              Wallstraße 50
               <br />
-              [PLZ Ort]
+              06780 Zörbig
               <br />
               Deutschland
             </p>
