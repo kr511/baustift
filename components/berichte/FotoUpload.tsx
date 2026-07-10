@@ -3,6 +3,15 @@
 import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
+const MAX_DATEIGROESSE = 10 * 1024 * 1024;
+const ERLAUBTE_TYPEN = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+];
+
 interface HochgeladenesFoto {
   storage_path: string;
   dateiname: string;
@@ -34,7 +43,17 @@ export function FotoUpload({
     const neueFotos: HochgeladenesFoto[] = [];
 
     for (const file of Array.from(fileList)) {
-      const path = `entwuerfe/${crypto.randomUUID()}-${file.name}`;
+      if (!ERLAUBTE_TYPEN.includes(file.type)) {
+        setError(`"${file.name}" ist kein unterstütztes Bildformat (JPG, PNG, WebP, HEIC).`);
+        continue;
+      }
+      if (file.size > MAX_DATEIGROESSE) {
+        setError(`"${file.name}" ist zu groß (max. 10 MB).`);
+        continue;
+      }
+
+      const sichererName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const path = `entwuerfe/${crypto.randomUUID()}-${sichererName}`;
       const { error: uploadError } = await supabase.storage
         .from("tagesbericht-fotos")
         .upload(path, file);

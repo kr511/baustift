@@ -95,8 +95,9 @@ export async function createTagesbericht(
     .single();
 
   if (error || !bericht) {
+    console.error("createTagesbericht fehlgeschlagen:", error);
     return {
-      message: `Tagesbericht konnte nicht angelegt werden: ${error?.message ?? "unbekannter Fehler"}`,
+      message: "Tagesbericht konnte nicht angelegt werden. Bitte erneut versuchen.",
     };
   }
 
@@ -174,7 +175,8 @@ export async function updateTagesbericht(
     .eq("id", id);
 
   if (error) {
-    return { message: `Tagesbericht konnte nicht gespeichert werden: ${error.message}` };
+    console.error("updateTagesbericht fehlgeschlagen:", error);
+    return { message: "Tagesbericht konnte nicht gespeichert werden. Bitte erneut versuchen." };
   }
 
   // Zeilenlisten werden komplett ersetzt statt einzeln abgeglichen — bei der

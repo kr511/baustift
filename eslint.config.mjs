@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Eigenständiges CommonJS-Paket (Electron-Wrapper), nicht Teil der Next-App:
+    "desktop/**",
   ]),
 ]);
 

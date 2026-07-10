@@ -43,7 +43,8 @@ export async function createBaustelle(
   });
 
   if (error) {
-    return { message: `Baustelle konnte nicht angelegt werden: ${error.message}` };
+    console.error("createBaustelle fehlgeschlagen:", error);
+    return { message: "Baustelle konnte nicht angelegt werden. Bitte erneut versuchen." };
   }
 
   revalidatePath("/baustellen");

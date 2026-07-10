@@ -42,6 +42,7 @@ export interface Database {
           wetter: string;
           stichpunkte: string;
           bericht_text: string | null;
+          ki_generiert_am: string | null;
           status: TagesberichtStatus;
           created_by: string | null;
           created_at: string;
@@ -54,6 +55,7 @@ export interface Database {
           wetter: string;
           stichpunkte: string;
           bericht_text?: string | null;
+          ki_generiert_am?: string | null;
           status?: TagesberichtStatus;
           created_by?: string | null;
           created_at?: string;
