@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { CONTACT_EMAIL } from "@/lib/config";
 
 export const metadata: Metadata = {
-  title: "Impressum | Tagesberichte",
+  title: "Impressum | Baustift",
   robots: { index: false },
 };
 
@@ -49,7 +49,7 @@ export default function ImpressumPage() {
           <section>
             <h2 className="label-tag mb-2">Urheberrecht</h2>
             <p>
-              Die Software &bdquo;Tagesberichte&ldquo;, ihr Quellcode, das
+              Die Software &bdquo;Baustift&ldquo;, ihr Quellcode, das
               Design und alle Inhalte dieser Website sind urheberrechtlich
               geschützt. Alle Rechte liegen bei Elias Kümmel. Vervielfältigung,
               Bearbeitung oder Verbreitung außerhalb der Grenzen des

@@ -1,7 +1,7 @@
 {
-  "name": "tagesberichte-desktop",
+  "name": "baustift-desktop",
   "version": "1.0.0",
-  "description": "Desktop-Wrapper für die Swietelsky Faber Tagesberichte-App",
+  "description": "Desktop-Wrapper für die Baustift-App (Bautagesberichte)",
   "author": "Elias Kümmel <eliaskummel@gmail.com>",
   "main": "main.js",
   "private": true,
@@ -16,8 +16,8 @@
     "electron-builder": "^26.0.12"
   },
   "build": {
-    "appId": "com.eliaskummel.tagesberichte",
-    "productName": "Tagesberichte",
+    "appId": "com.eliaskummel.baustift",
+    "productName": "Baustift",
     "copyright": "Copyright © 2026 Elias Kümmel. Alle Rechte vorbehalten.",
     "files": ["main.js", "error.html"],
     "directories": {
@@ -30,17 +30,17 @@
     "nsis": {
       "oneClick": true,
       "perMachine": false,
-      "artifactName": "Tagesberichte-Setup.exe",
+      "artifactName": "Baustift-Setup.exe",
       "deleteAppDataOnUninstall": false
     },
     "portable": {
-      "artifactName": "Tagesberichte-Portable.exe"
+      "artifactName": "Baustift-Portable.exe"
     },
     "linux": {
       "icon": "build/icon.png",
       "target": ["AppImage"],
       "category": "Office",
-      "artifactName": "Tagesberichte.AppImage"
+      "artifactName": "Baustift.AppImage"
     }
   }
 }

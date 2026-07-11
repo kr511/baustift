@@ -3,7 +3,7 @@ import Link from "next/link";
 import { CONTACT_EMAIL } from "@/lib/config";
 
 export const metadata: Metadata = {
-  title: "Tagesberichte | Bautagesberichte aus Stichpunkten",
+  title: "Baustift | Bautagesberichte aus Stichpunkten",
   description:
     "Stichpunkte rein, fertiger Bautagesbericht raus. Personal, Material, Wetter und Fotos erfassen — die KI formuliert den Bericht, einheitlich und druckfertig.",
 };
@@ -20,10 +20,10 @@ export default function MarketingLayout({
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <Link href="/" className="flex items-baseline gap-3">
             <span className="font-display text-2xl leading-none font-bold tracking-tight text-white">
-              SWIETELSKY&nbsp;FABER
+              BAUSTIFT
             </span>
             <span className="label-tag text-amber hidden sm:inline">
-              Tagesberichte
+              Bautagesberichte
             </span>
           </Link>
           <nav className="flex items-center gap-1 text-sm">
