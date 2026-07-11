@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { CONTACT_EMAIL } from "@/lib/config";
 
 export const metadata: Metadata = {
-  title: "Datenschutzerklärung | Tagesberichte",
+  title: "Datenschutzerklärung | Baustift",
   robots: { index: false },
 };
 

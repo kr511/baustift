@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { LoginForm } from "@/components/auth/LoginForm";
 
 export const metadata: Metadata = {
-  title: "Anmelden | Swietelsky Faber Tagesberichte",
+  title: "Anmelden | Baustift",
 };
 
 export default function LoginPage() {

@@ -1,8 +1,8 @@
-# Tagesberichte — Swietelsky Faber
+# Baustift
 
 Copyright © 2026 Elias Kümmel. Alle Rechte vorbehalten — proprietäre Software, siehe [LICENSE](./LICENSE). Dieses Repository ist öffentlich, um die Windows-Downloads (Releases) bereitzustellen; es gewährt keine Rechte am Quellcode.
 
-Web-App, die aus Stichpunkten fertige Bautagesberichte erstellt. Poliere/Bauleiter erfassen Baustelle, Personal, Material, Wetter und ein paar Stichpunkte — die KI formuliert daraus einen einheitlichen, professionellen Tagesbericht mit Druckansicht.
+Baustift ist eine Web-App, die aus Stichpunkten fertige Bautagesberichte erstellt. Poliere/Bauleiter erfassen Baustelle, Personal, Material, Wetter und ein paar Stichpunkte — die KI formuliert daraus einen einheitlichen, professionellen Tagesbericht mit Druckansicht.
 
 ## Stack
 
@@ -48,5 +48,5 @@ Auth: ein gemeinsamer Firmen-Account (Supabase Auth, E-Mail + Passwort). **Signu
 ## Deployment
 
 - **Web**: Vercel. Env-Vars am Vercel-Projekt setzen, Supabase Auth Site-URL auf die Produktions-Domain stellen.
-- **Windows-Exe**: Git-Tag `v*` pushen → GitHub Actions (`.github/workflows/release.yml`) baut auf `windows-latest` per electron-builder und erstellt ein GitHub Release. Stabile Download-URL: `releases/latest/download/Tagesberichte-Setup.exe`.
+- **Windows-Exe**: Git-Tag `v*` pushen → GitHub Actions (`.github/workflows/release.yml`) baut auf `windows-latest` per electron-builder und erstellt ein GitHub Release. Stabile Download-URL: `releases/latest/download/Baustift-Setup.exe`.
 - Lokaler Test des Wrappers (Linux): `cd desktop && npm run dist:linux` → AppImage.
