@@ -21,7 +21,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Baustift | Swietelsky Faber",
+  title: "Baustift | Bautagesberichte",
   description: "Baustellen-Tagesberichte aus Stichpunkten erstellen",
 };
 

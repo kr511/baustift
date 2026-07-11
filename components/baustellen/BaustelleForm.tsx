@@ -66,19 +66,6 @@ export function BaustelleForm() {
         <textarea id="notiz" name="notiz" rows={2} className="field-input" />
       </div>
 
-      <div>
-        <label htmlFor="created_by" className="label-tag mb-1 block">
-          Angelegt von
-        </label>
-        <input
-          id="created_by"
-          name="created_by"
-          type="text"
-          placeholder="Dein Name"
-          className="field-input max-w-xs"
-        />
-      </div>
-
       {state.message && state.message !== "success" && (
         <p className="border-brick bg-brick-bg text-brick border-[1.5px] p-3 text-sm">
           {state.message}

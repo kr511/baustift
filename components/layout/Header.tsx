@@ -5,9 +5,21 @@ const navItems = [
   { href: "/berichte", label: "Übersicht" },
   { href: "/berichte/neu", label: "Neuer Bericht" },
   { href: "/baustellen", label: "Baustellen" },
+  { href: "/konto", label: "Konto" },
 ];
 
-export function Header() {
+const adminNavItems = [
+  { href: "/admin/nutzer", label: "Nutzer" },
+  { href: "/admin/vorlagen", label: "Stil-Vorlagen" },
+];
+
+export function Header({
+  firmaWordmark,
+  isAdmin,
+}: {
+  firmaWordmark: string | null;
+  isAdmin: boolean;
+}) {
   return (
     <div className="print:hidden">
       <div className="hazard-rule" />
@@ -15,14 +27,14 @@ export function Header() {
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <Link href="/berichte" className="flex items-baseline gap-3">
             <span className="font-display text-2xl leading-none font-bold tracking-tight text-white">
-              SWIETELSKY&nbsp;FABER
+              {firmaWordmark ?? "BAUSTIFT"}
             </span>
             <span className="label-tag text-amber hidden sm:inline">
               Tagesberichte
             </span>
           </Link>
-          <nav className="flex gap-1 text-sm">
-            {navItems.map((item) => (
+          <nav className="flex flex-wrap gap-1 text-sm">
+            {[...navItems, ...(isAdmin ? adminNavItems : [])].map((item) => (
               <Link
                 key={item.href}
                 href={item.href}

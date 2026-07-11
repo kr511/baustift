@@ -13,12 +13,14 @@ export function KiGenerateButton({
   const [berichtText, setBerichtText] = useState(initialBerichtText ?? "");
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hinweis, setHinweis] = useState<string | null>(null);
   const [savedHinweis, setSavedHinweis] = useState(false);
   const [isSaving, startSaving] = useTransition();
 
   async function handleGenerate() {
     setGenerating(true);
     setError(null);
+    setHinweis(null);
     try {
       const res = await fetch(`/api/tagesberichte/${tagesberichtId}/generate`, {
         method: "POST",
@@ -29,6 +31,11 @@ export function KiGenerateButton({
         return;
       }
       setBerichtText(data.berichtText);
+      if (data.ausgelasseneDokumente?.length > 0) {
+        setHinweis(
+          `Nicht berücksichtigt (Limit erreicht): ${data.ausgelasseneDokumente.join(", ")}`,
+        );
+      }
     } catch {
       setError("Verbindung zur KI fehlgeschlagen. Bitte erneut versuchen.");
     } finally {
@@ -81,6 +88,7 @@ export function KiGenerateButton({
           {error}
         </p>
       )}
+      {hinweis && <p className="text-xs text-ink-soft">{hinweis}</p>}
 
       {berichtText ? (
         <textarea

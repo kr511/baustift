@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
+import { getUserFirma } from "@/lib/data/firma";
+import { getKiKontextDokumente } from "@/lib/data/kiKontextDokumente";
+import { getAktiveStilVorlagen } from "@/lib/data/stilVorlagen";
 import { generateBautagesbericht } from "@/lib/anthropic/generateBericht";
 
 const COOLDOWN_SEKUNDEN = 30;
@@ -15,7 +18,9 @@ export async function POST(
 
   const { data: bericht, error: berichtError } = await supabase
     .from("tagesberichte")
-    .select("id, datum, wetter, stichpunkte, ki_generiert_am, baustellen(name)")
+    .select(
+      "id, baustelle_id, datum, wetter, stichpunkte, ki_generiert_am, baustellen(name)",
+    )
     .eq("id", id)
     .single();
 
@@ -39,12 +44,18 @@ export async function POST(
     }
   }
 
+  const firma = await getUserFirma();
+
   const heuteStart = new Date();
   heuteStart.setHours(0, 0, 0, 0);
-  const { count: generierungenHeute } = await supabase
+  let tageslimitQuery = supabase
     .from("tagesberichte")
     .select("id", { count: "exact", head: true })
     .gte("ki_generiert_am", heuteStart.toISOString());
+  if (firma) {
+    tageslimitQuery = tageslimitQuery.eq("firma_id", firma.id);
+  }
+  const { count: generierungenHeute } = await tageslimitQuery;
 
   if ((generierungenHeute ?? 0) >= TAGESLIMIT_GESAMT) {
     return NextResponse.json(
@@ -55,25 +66,31 @@ export async function POST(
     );
   }
 
-  const [{ data: personal }, { data: material }] = await Promise.all([
-    supabase
-      .from("tagesbericht_personal")
-      .select("name, stunden, taetigkeit")
-      .eq("tagesbericht_id", id),
-    supabase
-      .from("tagesbericht_material")
-      .select("bezeichnung, menge, typ")
-      .eq("tagesbericht_id", id),
-  ]);
+  const [{ data: personal }, { data: material }, kiKontext, stilVorlagen] =
+    await Promise.all([
+      supabase
+        .from("tagesbericht_personal")
+        .select("name, stunden, taetigkeit")
+        .eq("tagesbericht_id", id),
+      supabase
+        .from("tagesbericht_material")
+        .select("bezeichnung, menge, typ")
+        .eq("tagesbericht_id", id),
+      getKiKontextDokumente(bericht.baustelle_id),
+      firma ? getAktiveStilVorlagen(firma.id) : Promise.resolve([]),
+    ]);
 
   try {
     const berichtText = await generateBautagesbericht({
+      firma: firma ? { name: firma.name, land: firma.land } : null,
       baustelleName: bericht.baustellen?.name ?? "Unbekannte Baustelle",
       datum: bericht.datum,
       wetter: bericht.wetter,
       stichpunkte: bericht.stichpunkte,
       personal: personal ?? [],
       material: material ?? [],
+      dokumente: kiKontext.dokumente,
+      stilVorlagen,
     });
 
     await supabase
@@ -84,7 +101,10 @@ export async function POST(
       })
       .eq("id", id);
 
-    return NextResponse.json({ berichtText });
+    return NextResponse.json({
+      berichtText,
+      ausgelasseneDokumente: kiKontext.ausgelassen,
+    });
   } catch (err) {
     if (err instanceof Anthropic.APIError) {
       return NextResponse.json(

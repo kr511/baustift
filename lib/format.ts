@@ -22,3 +22,27 @@ export function formatDatumKurz(iso: string): string {
 export function heuteISO(): string {
   return new Date().toISOString().slice(0, 10);
 }
+
+const UMLAUT_MAP: Record<string, string> = {
+  ä: "ae",
+  ö: "oe",
+  ü: "ue",
+  Ä: "Ae",
+  Ö: "Oe",
+  Ü: "Ue",
+  ß: "ss",
+};
+
+// Für Content-Disposition-Dateinamen: nur [A-Za-z0-9._-], Umlaute
+// transliteriert statt entfernt, alles andere durch "-" ersetzt.
+export function sanitizeDateiname(input: string): string {
+  const transliteriert = input.replace(
+    /[äöüÄÖÜß]/g,
+    (zeichen) => UMLAUT_MAP[zeichen] ?? zeichen,
+  );
+  const bereinigt = transliteriert
+    .replace(/[^A-Za-z0-9._-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return bereinigt || "bericht";
+}

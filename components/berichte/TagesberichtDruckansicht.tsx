@@ -3,8 +3,10 @@ import type { TagesberichtVollstaendig } from "@/lib/data/tagesberichte";
 
 export function TagesberichtDruckansicht({
   bericht,
+  firmaWordmark,
 }: {
   bericht: TagesberichtVollstaendig;
+  firmaWordmark: string | null;
 }) {
   return (
     <article className="mx-auto max-w-3xl bg-white p-10 text-ink print:p-0">
@@ -13,7 +15,7 @@ export function TagesberichtDruckansicht({
       <header className="flex items-end justify-between border-b-2 border-ink pb-4">
         <div>
           <p className="font-display text-lg leading-none font-bold tracking-tight">
-            SWIETELSKY&nbsp;FABER
+            {firmaWordmark ?? "BAUSTIFT"}
           </p>
           <p className="label-tag mt-1">Bautagesbericht</p>
         </div>

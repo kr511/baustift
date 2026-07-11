@@ -34,7 +34,7 @@ export async function BaustellenListe() {
         >
           <div>
             <Link
-              href={`/berichte?baustelle=${baustelle.id}`}
+              href={`/baustellen/${baustelle.id}`}
               className="font-semibold text-ink decoration-line underline-offset-2 hover:underline"
             >
               {baustelle.name}

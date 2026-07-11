@@ -36,10 +36,11 @@ export default function DatenschutzPage() {
               Beim Besuch dieser Website werden technisch notwendige Daten
               (IP-Adresse, Zeitpunkt, aufgerufene Seite) in Server-Logs
               verarbeitet. Bei Nutzung der Anwendung (Login-Bereich) werden
-              zusätzlich verarbeitet: Zugangsdaten (E-Mail-Adresse),
-              Sitzungs-Cookies sowie die von Nutzern eingegebenen
-              Berichtsdaten (Baustellen, Namen und Arbeitsstunden von
-              Personal, Material, Stichpunkte, Fotos).
+              zusätzlich verarbeitet: Zugangsdaten (E-Mail-Adresse,
+              persönliches Nutzerkonto), Sitzungs-Cookies sowie die von
+              Nutzern eingegebenen Berichtsdaten (Baustellen, Namen und
+              Arbeitsstunden von Personal, Material, Stichpunkte, Fotos,
+              optional hochgeladene Baustellen-Dokumente).
             </p>
           </section>
 
@@ -68,16 +69,39 @@ export default function DatenschutzPage() {
               Hosting der Website: Vercel Inc. (USA). Datenbank und
               Dateispeicher: Supabase (Serverstandort Frankfurt am Main,
               EU). KI-Textgenerierung: Anthropic PBC (USA) — zur Generierung
-              werden die eingegebenen Berichtsdaten (Stichpunkte, Personal,
-              Material, Wetter) an die Anthropic-API übermittelt. Mit den
-              Dienstleistern bestehen Auftragsverarbeitungsverträge; für
-              Übermittlungen in die USA stützen sich die Anbieter auf das
-              EU-US Data Privacy Framework bzw. Standardvertragsklauseln.
+              werden die eingegebenen Berichtsdaten (Stichpunkte, Wetter,
+              Material sowie Anzahl/Gewerk/Stunden des eingesetzten
+              Personals) an die Anthropic-API übermittelt. Mit den
+              Dienstleistern bestehen bzw. werden Auftragsverarbeitungsverträge
+              abgeschlossen; für Übermittlungen in die USA stützen sich die
+              Anbieter auf das EU-US Data Privacy Framework bzw.
+              Standardvertragsklauseln.
             </p>
           </section>
 
           <section>
-            <h2 className="label-tag mb-2">6. Speicherdauer</h2>
+            <h2 className="label-tag mb-2">6. Datenminimierung bei der KI-Nutzung</h2>
+            <p>
+              Namen von Mitarbeitenden werden vor der Übermittlung an die
+              Anthropic-API automatisch durch neutrale Platzhalter (z. B.
+              &bdquo;Mitarbeiter 1&ldquo;) ersetzt; die KI erhält nur Gewerk
+              und Arbeitsstunden. Die namentliche Personalliste bleibt
+              ausschließlich in der Datenbank sowie in Druckansicht und
+              PDF-Export sichtbar. Die frei formulierten Stichpunkte können
+              dennoch personenbezogene Angaben enthalten, die Nutzer selbst
+              eintragen — wir bitten darum, dort möglichst keine vollen Namen
+              zu verwenden. Werden Baustellen-Dokumente von Nutzern
+              ausdrücklich als KI-Kontext markiert, werden diese ebenfalls an
+              die Anthropic-API übermittelt, um Fachbegriffe und
+              Positionsbezeichnungen korrekt zu übernehmen. Nach den
+              kommerziellen Nutzungsbedingungen von Anthropic werden über die
+              API übermittelte Daten nicht zum Training der Modelle
+              verwendet.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="label-tag mb-2">7. Speicherdauer</h2>
             <p>
               Berichtsdaten werden gespeichert, solange das nutzende
               Unternehmen sie benötigt, und auf Anforderung gelöscht.
@@ -86,7 +110,7 @@ export default function DatenschutzPage() {
           </section>
 
           <section>
-            <h2 className="label-tag mb-2">7. Ihre Rechte</h2>
+            <h2 className="label-tag mb-2">8. Ihre Rechte</h2>
             <p>
               Sie haben das Recht auf Auskunft, Berichtigung, Löschung,
               Einschränkung der Verarbeitung, Datenübertragbarkeit und

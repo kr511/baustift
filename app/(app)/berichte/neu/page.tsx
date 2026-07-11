@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { TagesberichtForm } from "@/components/berichte/TagesberichtForm";
 
@@ -28,9 +29,9 @@ export default async function NeuerTagesberichtPage({
         {!baustellen || baustellen.length === 0 ? (
           <p className="border-amber bg-paper-raised mt-6 border-[1.5px] p-4 text-sm">
             Es ist noch keine Baustelle angelegt. Bitte zuerst unter{" "}
-            <a href="/baustellen" className="font-semibold underline">
+            <Link href="/baustellen" className="font-semibold underline">
               Baustellen
-            </a>{" "}
+            </Link>{" "}
             eine Baustelle anlegen.
           </p>
         ) : (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -70,6 +71,15 @@ export function LoginForm() {
       <button type="submit" disabled={pending} className="btn-primary w-full">
         {pending ? "Wird angemeldet…" : "Anmelden"}
       </button>
+
+      <p className="text-sm text-ink-soft">
+        <Link
+          href="/passwort-vergessen"
+          className="underline underline-offset-2"
+        >
+          Passwort vergessen?
+        </Link>
+      </p>
     </form>
   );
 }

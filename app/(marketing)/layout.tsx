@@ -66,6 +66,12 @@ export default function MarketingLayout({
             >
               Datenschutz
             </Link>
+            <Link
+              href="/nutzungsbedingungen"
+              className="label-tag text-white/80 transition-colors hover:text-amber"
+            >
+              Nutzungsbedingungen
+            </Link>
             <a
               href={`mailto:${CONTACT_EMAIL}`}
               className="label-tag text-white/80 transition-colors hover:text-amber"

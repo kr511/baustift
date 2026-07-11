@@ -3,13 +3,13 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getUserProfil } from "@/lib/data/profile";
 
 const baustelleSchema = z.object({
   name: z.string().trim().min(1, "Name ist erforderlich."),
   adresse: z.string().trim().optional(),
   auftraggeber: z.string().trim().optional(),
   notiz: z.string().trim().optional(),
-  created_by: z.string().trim().optional(),
 });
 
 export interface BaustelleFormState {
@@ -26,7 +26,6 @@ export async function createBaustelle(
     adresse: formData.get("adresse"),
     auftraggeber: formData.get("auftraggeber"),
     notiz: formData.get("notiz"),
-    created_by: formData.get("created_by"),
   });
 
   if (!validated.success) {
@@ -34,12 +33,14 @@ export async function createBaustelle(
   }
 
   const supabase = await createClient();
+  const profil = await getUserProfil();
   const { error } = await supabase.from("baustellen").insert({
     name: validated.data.name,
     adresse: validated.data.adresse || null,
     auftraggeber: validated.data.auftraggeber || null,
     notiz: validated.data.notiz || null,
-    created_by: validated.data.created_by || null,
+    created_by: profil?.displayName ?? null,
+    created_by_user_id: profil?.id ?? null,
   });
 
   if (error) {

@@ -5,6 +5,7 @@ import { formatDatum } from "@/lib/format";
 import { StatusBadge } from "@/components/berichte/StatusBadge";
 import { KiGenerateButton } from "@/components/berichte/KiGenerateButton";
 import { FinalisierenButton } from "@/components/berichte/FinalisierenButton";
+import { PdfDownloadButton } from "@/components/berichte/PdfDownloadButton";
 
 export default async function TagesberichtDetailPage({
   params,
@@ -41,6 +42,7 @@ export default async function TagesberichtDetailPage({
             <Link href={`/berichte/${bericht.id}/druckansicht`} className="btn-secondary">
               Druckansicht
             </Link>
+            <PdfDownloadButton berichtId={bericht.id} />
             {bericht.status === "entwurf" && (
               <FinalisierenButton tagesberichtId={bericht.id} />
             )}

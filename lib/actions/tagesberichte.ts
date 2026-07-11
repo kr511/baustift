@@ -4,6 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getUserProfil } from "@/lib/data/profile";
 
 const personalZeileSchema = z.object({
   name: z.string().trim().min(1),
@@ -27,7 +28,6 @@ const tagesberichtSchema = z.object({
   datum: z.string().min(1, "Datum ist erforderlich."),
   wetter: z.string().trim().min(1, "Wetter ist erforderlich."),
   stichpunkte: z.string().trim().min(1, "Stichpunkte sind erforderlich."),
-  created_by: z.string().trim().optional(),
   personal_json: z.string().optional(),
   material_json: z.string().optional(),
   foto_json: z.string().optional(),
@@ -66,7 +66,6 @@ export async function createTagesbericht(
     datum: formData.get("datum"),
     wetter: formData.get("wetter"),
     stichpunkte: formData.get("stichpunkte"),
-    created_by: formData.get("created_by"),
     personal_json: formData.get("personal_json"),
     material_json: formData.get("material_json"),
     foto_json: formData.get("foto_json"),
@@ -81,6 +80,7 @@ export async function createTagesbericht(
   const fotos = parseJsonArray(validated.data.foto_json, fotoZeileSchema);
 
   const supabase = await createClient();
+  const profil = await getUserProfil();
 
   const { data: bericht, error } = await supabase
     .from("tagesberichte")
@@ -89,7 +89,8 @@ export async function createTagesbericht(
       datum: validated.data.datum,
       wetter: validated.data.wetter,
       stichpunkte: validated.data.stichpunkte,
-      created_by: validated.data.created_by || null,
+      created_by: profil?.displayName ?? null,
+      created_by_user_id: profil?.id ?? null,
     })
     .select("id")
     .single();
@@ -147,7 +148,6 @@ export async function updateTagesbericht(
     datum: formData.get("datum"),
     wetter: formData.get("wetter"),
     stichpunkte: formData.get("stichpunkte"),
-    created_by: formData.get("created_by"),
     personal_json: formData.get("personal_json"),
     material_json: formData.get("material_json"),
     foto_json: formData.get("foto_json"),
@@ -163,6 +163,8 @@ export async function updateTagesbericht(
 
   const supabase = await createClient();
 
+  // created_by bleibt beim ursprünglichen Ersteller — wird beim Update
+  // bewusst nicht überschrieben.
   const { error } = await supabase
     .from("tagesberichte")
     .update({
@@ -170,7 +172,6 @@ export async function updateTagesbericht(
       datum: validated.data.datum,
       wetter: validated.data.wetter,
       stichpunkte: validated.data.stichpunkte,
-      created_by: validated.data.created_by || null,
     })
     .eq("id", id);
 

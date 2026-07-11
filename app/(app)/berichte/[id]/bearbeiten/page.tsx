@@ -37,7 +37,6 @@ export default async function TagesberichtBearbeitenPage({
               datum: bericht.datum,
               wetter: bericht.wetter,
               stichpunkte: bericht.stichpunkte,
-              created_by: bericht.created_by,
               personal: bericht.personal.map((p) => ({
                 name: p.name,
                 stunden: String(p.stunden),

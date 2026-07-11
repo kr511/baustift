@@ -25,7 +25,6 @@ export interface TagesberichtInitialData {
   datum: string;
   wetter: string;
   stichpunkte: string;
-  created_by: string | null;
   personal: PersonalZeile[];
   material: MaterialZeile[];
   fotos: { storage_path: string; dateiname: string; url: string }[];
@@ -164,23 +163,14 @@ export function TagesberichtForm({
         />
         <p className="mt-1.5 text-xs text-ink-soft">
           Kurze Stichpunkte reichen — die KI formuliert daraus den vollständigen Bericht.
+          Bitte möglichst keine vollen Namen von Mitarbeitenden hier eintragen
+          (die Personalliste oben genügt).
         </p>
         <FeldFehler messages={state.errors?.stichpunkte} />
       </Sektion>
 
       <Sektion nr="06" titel="Fotos">
         <FotoUpload initialFotos={initialData?.fotos} />
-      </Sektion>
-
-      <Sektion nr="07" titel="Erstellt von">
-        <input
-          id="created_by"
-          name="created_by"
-          type="text"
-          defaultValue={initialData?.created_by ?? undefined}
-          placeholder="Dein Name"
-          className="field-input max-w-xs"
-        />
       </Sektion>
 
       {state.message && (
