@@ -110,13 +110,14 @@ Die Windows-Exe und die Web-App sind für jede Firma identisch — welche Daten 
 ## Deployment
 
 - **Web**: Vercel. Env-Vars am Vercel-Projekt setzen (inkl. `SUPABASE_SERVICE_ROLE_KEY` als serverseitiges Secret), Supabase Auth Site-URL auf die Produktions-Domain stellen.
-- **Windows-Exe**: Git-Tag `v*` pushen → GitHub Actions (`.github/workflows/release.yml`) baut auf `windows-latest` per electron-builder und erstellt ein GitHub Release. Stabile Download-URL: `releases/latest/download/Baustift-Setup.exe`.
+- **Windows-Exe**: Git-Tag `v*` pushen → GitHub Actions (`.github/workflows/release.yml`) baut auf `windows-latest` per electron-builder, setzt die `desktop/package.json`-Version automatisch aus dem Tag (`vX.Y.Z` → `X.Y.Z`) und erstellt ein GitHub Release. Stabile Download-URL: `releases/latest/download/Baustift-Setup.exe`.
+- **Auto-Update**: die installierte (NSIS-)Version prüft per `electron-updater` automatisch kurz nach dem Start und danach alle 4 Stunden auf neue GitHub-Releases, lädt ein gefundenes Update im Hintergrund herunter und fragt nach dem Download, ob sofort neu gestartet werden soll (sonst installiert es sich beim nächsten regulären Neustart). Manuell auslösbar über Menü „Hilfe → Nach Updates suchen". Voraussetzung: jedes Release muss über den Tag-Workflow gebaut werden, damit `latest.yml` (Update-Metadaten) mit hochgeladen wird — ein manuell erstelltes Release ohne diese Datei wird von bestehenden Installationen nicht erkannt. Die **portable** Version aktualisiert sich nicht automatisch (electron-updater unterstützt das Portable-Zielformat nicht) — dort bleibt nur der manuelle Neu-Download.
 - Lokaler Test des Wrappers (Linux): `cd desktop && npm run dist:linux` → AppImage.
 - PDF-Download in Electron: läuft über den nativen Download-Handler des `BrowserWindow`; Passwort-Reset-Links öffnen im System-Browser (dort Passwort setzen, danach in der App anmelden).
 
 ## Bekannte Grenzen (Stand 1.0)
 
-- Kein Self-Service-Onboarding weiterer Firmen (Seed-Firma ist fest in Migration `0004` verdrahtet — vor Firma Nr. 2 anpassen).
+- Kein öffentliches Self-Service-Registrierungsformular für neue Firmen — Onboarding läuft weiterhin über den Betreiber (siehe „Neue Firma onboarden" oben).
 - RLS scoped nur per Firma, nicht zusätzlich per Niederlassung.
 - Foto-Bucket (`tagesbericht-fotos`) bleibt bucket-weit statt firma-präfixiert (Bestandsdaten); der neue Dokumenten-Bucket ist von Anfang an firma-präfixiert.
 - HEIC/WebP-Fotos werden im PDF-Export durch eine Hinweiszeile ersetzt (react-pdf unterstützt nur JPEG/PNG); Druckansicht im Browser zeigt sie weiterhin.
