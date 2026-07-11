@@ -48,15 +48,31 @@ Migrationen liegen in `supabase/migrations/` und werden in Reihenfolge auf das S
 - `0005_created_by_user.sql` — `created_by_user_id` auf `baustellen`/`tagesberichte`
 - `0006_rls_firma_scope.sql` — **RLS-Cutover** auf Firma-Scoping (siehe Runbook unten)
 - `0007_dokumente_und_vorlagen.sql` — Dokumenten-Bucket, `baustelle_dokumente`, `stil_vorlagen`
+- `0008_firma_aus_invite_metadata.sql` — `handle_new_user()` liest `firma_id` aus den Einladungs-Metadaten statt sie hart auf den Seed-Mandanten zu verdrahten (Vorbereitung für weitere Firmen)
 
 ### Auth: persönliche Konten (Invite-only)
 
 Jeder Nutzer bekommt ein eigenes Konto. Es gibt **keine Selbstregistrierung** — Konten werden per Einladung angelegt:
 
-- **Dashboard**: Authentication → Users → Invite user. `display_name`/`role` können als User-Metadata (`display_name`, `role: "admin"|"nutzer"`) mitgegeben werden, sonst greift der Fallback (E-Mail-Präfix, Rolle `nutzer`).
-- **In-App**: `/admin/nutzer` (nur für Administratoren) sendet die Einladung über `lib/actions/admin.ts#inviteNutzer` mit dem Service-Role-Key.
+- **Dashboard**: Authentication → Users → Invite user. `display_name`/`role`/`firma_id` können als User-Metadata mitgegeben werden, sonst greift der Fallback (E-Mail-Präfix, Rolle `nutzer`, Seed-Firma).
+- **In-App**: `/admin/nutzer` (nur für Administratoren) sendet die Einladung über `lib/actions/admin.ts#inviteNutzer` mit dem Service-Role-Key. `firma_id` wird dabei immer auf die Firma des einladenden Admins gesetzt — über die App kann niemand einen Nutzer einer anderen Firma zuordnen.
 
 **Signups müssen im Supabase-Dashboard deaktiviert bleiben** (Authentication → Sign In / Providers → "Allow new users to sign up" aus).
+
+### Neue Firma onboarden (weiterhin nur durch den Betreiber)
+
+Die Windows-Exe und die Web-App sind für jede Firma identisch — welche Daten ein Nutzer sieht, entscheidet allein sein Profil (Firma-Scoping per RLS). Es gibt bewusst **kein öffentliches Registrierungsformular** für neue Firmen (Spam-/Missbrauchsschutz, keine ungeprüften Mandanten). Eine neue Firma kommt so ins System:
+
+1. Firma + Niederlassung anlegen:
+   ```sql
+   insert into public.firmen (name, wordmark, land) values ('Musterbau GmbH', 'MUSTERBAU', 'DE') returning id;
+   insert into public.niederlassungen (firma_id, name) values ('<firma-id>', 'Hauptsitz');
+   ```
+2. Ersten Admin per Dashboard einladen (Authentication → Invite user) mit User-Metadata:
+   ```json
+   { "firma_id": "<firma-id>", "display_name": "...", "role": "admin" }
+   ```
+3. Dieser Admin lädt seine Kolleg:innen danach selbst über `/admin/nutzer` ein — sie landen automatisch in derselben Firma.
 
 **E-Mail-Templates** (Authentication → Email Templates) müssen auf `app/auth/confirm/route.ts` zeigen, z. B. für "Invite user" und "Reset Password":
 

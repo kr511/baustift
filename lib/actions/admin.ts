@@ -38,14 +38,18 @@ export async function inviteNutzer(
   }
 
   const adminClient = createAdminClient();
-  // display_name/role landen in raw_user_meta_data und werden vom
-  // handle_new_user-Trigger (Migration 0004) ins Profil übernommen.
+  // display_name/role/firma_id landen in raw_user_meta_data und werden vom
+  // handle_new_user-Trigger (Migration 0004/0008) ins Profil übernommen.
+  // firma_id ist bewusst immer die des einladenden Admins — über die App
+  // kann niemand einen Nutzer einer anderen Firma zuordnen. Eine neue Firma
+  // onboarden geht weiterhin nur per Dashboard/SQL durch den Betreiber.
   const { error } = await adminClient.auth.admin.inviteUserByEmail(
     validated.data.email,
     {
       data: {
         display_name: validated.data.display_name,
         role: validated.data.role,
+        firma_id: profil.firmaId,
       },
     },
   );

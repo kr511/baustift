@@ -177,8 +177,10 @@ create policy "profiles_update_self" on public.profiles
 
 -- Auto-Profil bei jedem neuen Auth-User (Dashboard-Invite oder In-App-Invite;
 -- display_name/role kommen aus den Invite-Metadaten).
--- ACHTUNG: firma_id ist hier fest der Seed-Mandant. Vor dem Onboarding einer
--- zweiten Firma MUSS diese Funktion die Firma aus den Invite-Metadaten lesen.
+-- firma_id ist hier fest der Seed-Mandant; Migration 0008 ersetzt diese
+-- Funktion, sodass firma_id stattdessen aus den Invite-Metadaten kommt
+-- (Vorbereitung für weitere Firmen). Diese Version bleibt hier unverändert,
+-- weil Migrationen historisch sind — maßgeblich ist der Stand nach 0008.
 create function public.handle_new_user()
 returns trigger
 language plpgsql

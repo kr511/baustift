@@ -26,6 +26,17 @@ insbesondere für den Einsatz bei weiteren Firmen/Niederlassungen.
 - [ ] Klären, ob Swietelsky Faber eigene Vorgaben zur Logo-/Wordmark-Nutzung
       hat (aktuell reiner Text, kein Bild-Logo eingebunden).
 
+## Onboarding weiterer Firmen (Expansion über Swietelsky Faber hinaus)
+
+- [ ] Für jede neu onboardete Firma: eigenes AV-Vertrag-Exemplar (siehe unten)
+      abschließen, bevor der erste Nutzer eingeladen wird.
+- [ ] Vor der ersten Firma außerhalb von Swietelsky Faber: eigene
+      Nutzungsbedingungen/Preismodell klären (aktuell nicht vertraglich
+      geregelt, welche Konditionen für weitere Kunden gelten).
+- [ ] Technischer Ablauf zum Onboarden steht im README („Neue Firma
+      onboarden") — bewusst nur durch den Betreiber (Elias), kein
+      öffentliches Self-Service-Formular.
+
 ## Auftragsverhältnis Betreiber ↔ Kunde
 
 - [ ] **AV-Vertrag zwischen Elias Kümmel (Auftragsverarbeiter) und
