@@ -23,6 +23,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # electron-updater vergleicht die im Paket eingebettete package.json-
+      # Version mit der neuesten latest.yml auf GitHub — ohne diesen Schritt
+      # bliebe die Version für immer auf dem zuletzt committeten Stand und
+      # kein Update würde je erkannt.
+      - name: Set version from tag
+        shell: bash
+        run: npm version "${GITHUB_REF_NAME#v}" --no-git-tag-version --allow-same-version
+
       - name: Build Windows targets
         run: npx electron-builder --win --publish never
 
@@ -36,4 +44,6 @@ jobs:
             --title "Baustift ${{ github.ref_name }}" \
             --generate-notes \
             "desktop/dist/Baustift-Setup.exe" \
-            "desktop/dist/Baustift-Portable.exe"
+            "desktop/dist/Baustift-Portable.exe" \
+            "desktop/dist/latest.yml" \
+            "desktop/dist/Baustift-Setup.exe.blockmap"
