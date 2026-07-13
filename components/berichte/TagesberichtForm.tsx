@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import {
   createTagesbericht,
@@ -31,37 +31,77 @@ export interface TagesberichtInitialData {
   fotos: { storage_path: string; dateiname: string; url: string }[];
 }
 
-function SubmitButton({ label }: { label: string }) {
+function SubmitButton({ label, disabled }: { label: string; disabled: boolean }) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" disabled={pending} className="btn-primary w-full sm:w-auto">
+    <button
+      type="submit"
+      disabled={pending || disabled}
+      aria-busy={pending}
+      className="btn-primary w-full sm:w-auto"
+    >
       {pending ? "Wird gespeichert…" : label}
     </button>
   );
 }
 
-function FeldFehler({ messages }: { messages?: string[] }) {
+function Pflichtfeld() {
+  return (
+    <>
+      <span aria-hidden="true" className="text-brick">
+        {" "}*
+      </span>
+      <span className="sr-only"> (Pflichtfeld)</span>
+    </>
+  );
+}
+
+function FeldFehler({ id, messages }: { id: string; messages?: string[] }) {
   if (!messages?.[0]) return null;
-  return <p className="text-brick mt-1 text-sm">{messages[0]}</p>;
+  return (
+    <p id={id} role="alert" className="text-brick mt-1 text-sm">
+      {messages[0]}
+    </p>
+  );
 }
 
 function Sektion({
   nr,
   titel,
+  labelFor,
+  required = false,
   children,
 }: {
   nr: string;
   titel: string;
+  labelFor?: string;
+  required?: boolean;
   children: React.ReactNode;
 }) {
+  const headingId = `tagesbericht-sektion-${nr}`;
+
   return (
-    <div className="border-line border-t-[1.5px] pt-5 first:border-t-0 first:pt-0">
+    <section
+      aria-labelledby={headingId}
+      className="border-line border-t-[1.5px] pt-5 first:border-t-0 first:pt-0"
+    >
       <div className="mb-2 flex items-baseline gap-2">
-        <span className="font-mono text-xs font-semibold text-amber">{nr}</span>
-        <span className="label-tag">{titel}</span>
+        <span aria-hidden="true" className="font-mono text-xs font-semibold text-amber">
+          {nr}
+        </span>
+        <h2 id={headingId} className="label-tag">
+          {labelFor ? (
+            <label htmlFor={labelFor}>
+              {titel}
+              {required && <Pflichtfeld />}
+            </label>
+          ) : (
+            titel
+          )}
+        </h2>
       </div>
       {children}
-    </div>
+    </section>
   );
 }
 
@@ -71,6 +111,9 @@ export function TagesberichtForm({
   vorausgewaehlteBaustelleId,
   initialData,
   submitLabel = "Tagesbericht speichern",
+  disabled = false,
+  onDirtyChange,
+  onBusyChange,
 }: {
   baustellen: { id: string; name: string }[];
   action?: (
@@ -80,22 +123,56 @@ export function TagesberichtForm({
   vorausgewaehlteBaustelleId?: string;
   initialData?: TagesberichtInitialData;
   submitLabel?: string;
+  disabled?: boolean;
+  onDirtyChange?: (dirty: boolean) => void;
+  onBusyChange?: (busy: boolean) => void;
 }) {
-  const [state, formAction] = useActionState(
+  const [state, formAction, isPending] = useActionState(
     action ?? createTagesbericht,
     initialState,
   );
+  const [fotoBusy, setFotoBusy] = useState(false);
+  const eigeneOperationLaeuft = fotoBusy || isPending;
+  const formBusy = disabled || eigeneOperationLaeuft;
+
+  useEffect(() => {
+    onBusyChange?.(eigeneOperationLaeuft);
+  }, [eigeneOperationLaeuft, onBusyChange]);
+
+  function handleFotoBusy(busy: boolean) {
+    setFotoBusy(busy);
+  }
+
+  function markiereGeaendert() {
+    onDirtyChange?.(true);
+  }
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form
+      action={formAction}
+      onChange={markiereGeaendert}
+      aria-busy={formBusy}
+      aria-describedby={state.message ? "tagesbericht-form-fehler" : undefined}
+      className="space-y-5"
+    >
+      <fieldset disabled={formBusy} className="min-w-0 space-y-5 border-0 p-0">
+        <legend className="sr-only">Angaben zum Tagesbericht</legend>
       <Sektion nr="01" titel="Baustelle & Datum">
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
+            <label htmlFor="baustelle_id" className="label-tag mb-1 block">
+              Baustelle
+              <Pflichtfeld />
+            </label>
             <select
               id="baustelle_id"
               name="baustelle_id"
               required
               defaultValue={initialData?.baustelle_id ?? vorausgewaehlteBaustelleId ?? ""}
+              aria-invalid={Boolean(state.errors?.baustelle_id)}
+              aria-describedby={
+                state.errors?.baustelle_id ? "baustelle_id-fehler" : undefined
+              }
               className="field-input"
             >
               <option value="" disabled>
@@ -107,10 +184,11 @@ export function TagesberichtForm({
                 </option>
               ))}
             </select>
-            <FeldFehler messages={state.errors?.baustelle_id} />
+            <FeldFehler id="baustelle_id-fehler" messages={state.errors?.baustelle_id} />
             <Link
               href="/baustellen"
               target="_blank"
+              rel="noopener noreferrer"
               className="mt-1.5 inline-block text-sm text-ink-soft underline decoration-line underline-offset-2 hover:text-ink"
             >
               + neue Baustelle anlegen (neuer Tab)
@@ -118,65 +196,93 @@ export function TagesberichtForm({
           </div>
 
           <div>
+            <label htmlFor="datum" className="label-tag mb-1 block">
+              Datum
+              <Pflichtfeld />
+            </label>
             <input
               id="datum"
               name="datum"
               type="date"
               required
               defaultValue={initialData?.datum ?? heuteISO()}
+              aria-invalid={Boolean(state.errors?.datum)}
+              aria-describedby={state.errors?.datum ? "datum-fehler" : undefined}
               className="field-input font-mono"
             />
-            <FeldFehler messages={state.errors?.datum} />
+            <FeldFehler id="datum-fehler" messages={state.errors?.datum} />
           </div>
         </div>
       </Sektion>
 
-      <Sektion nr="02" titel="Wetter">
+      <Sektion nr="02" titel="Wetter" labelFor="wetter" required>
         <input
           id="wetter"
           name="wetter"
           type="text"
           required
+          maxLength={500}
           defaultValue={initialData?.wetter}
           placeholder="z. B. Sonnig, 18°C, leichter Wind"
+          aria-invalid={Boolean(state.errors?.wetter)}
+          aria-describedby={state.errors?.wetter ? "wetter-fehler" : undefined}
           className="field-input"
         />
-        <FeldFehler messages={state.errors?.wetter} />
+        <FeldFehler id="wetter-fehler" messages={state.errors?.wetter} />
       </Sektion>
 
       <Sektion nr="03" titel="Personal & Stunden">
-        <PersonalListEditor initialRows={initialData?.personal} />
+        <PersonalListEditor
+          initialRows={initialData?.personal}
+          onChanged={markiereGeaendert}
+        />
       </Sektion>
 
       <Sektion nr="04" titel="Material & Geräte">
-        <MaterialListEditor initialRows={initialData?.material} />
+        <MaterialListEditor
+          initialRows={initialData?.material}
+          onChanged={markiereGeaendert}
+        />
       </Sektion>
 
-      <Sektion nr="05" titel="Stichpunkte zum Tag">
+      <Sektion nr="05" titel="Stichpunkte zum Tag" labelFor="stichpunkte" required>
         <textarea
           id="stichpunkte"
           name="stichpunkte"
           required
           rows={6}
+          maxLength={20_000}
           defaultValue={initialData?.stichpunkte}
           placeholder={"z. B.\n- Fundament Achse 3-5 betoniert\n- Lieferung Bewehrungsstahl verspätet\n- Elektriker war vor Ort, hat Verteiler vorbereitet"}
+          aria-invalid={Boolean(state.errors?.stichpunkte)}
+          aria-describedby={
+            state.errors?.stichpunkte
+              ? "stichpunkte-hinweis stichpunkte-fehler"
+              : "stichpunkte-hinweis"
+          }
           className="field-input"
         />
-        <p className="mt-1.5 text-xs text-ink-soft">
+        <p id="stichpunkte-hinweis" className="mt-1.5 text-xs text-ink-soft">
           Kurze Stichpunkte reichen — die KI formuliert daraus den vollständigen Bericht.
         </p>
-        <FeldFehler messages={state.errors?.stichpunkte} />
+        <FeldFehler id="stichpunkte-fehler" messages={state.errors?.stichpunkte} />
       </Sektion>
 
       <Sektion nr="06" titel="Fotos">
-        <FotoUpload initialFotos={initialData?.fotos} />
+        <FotoUpload
+          initialFotos={initialData?.fotos}
+          disabled={disabled}
+          onBusyChange={handleFotoBusy}
+          onChanged={markiereGeaendert}
+        />
       </Sektion>
 
-      <Sektion nr="07" titel="Erstellt von">
+      <Sektion nr="07" titel="Erstellt von" labelFor="created_by">
         <input
           id="created_by"
           name="created_by"
           type="text"
+          maxLength={200}
           defaultValue={initialData?.created_by ?? undefined}
           placeholder="Dein Name"
           className="field-input max-w-xs"
@@ -184,14 +290,19 @@ export function TagesberichtForm({
       </Sektion>
 
       {state.message && (
-        <p className="border-brick bg-brick-bg text-brick border-[1.5px] p-3 text-sm">
+        <p
+          id="tagesbericht-form-fehler"
+          role="alert"
+          className="border-brick bg-brick-bg text-brick border-[1.5px] p-3 text-sm"
+        >
           {state.message}
         </p>
       )}
 
       <div className="border-line border-t-[1.5px] pt-5">
-        <SubmitButton label={submitLabel} />
+        <SubmitButton label={submitLabel} disabled={formBusy} />
       </div>
+      </fieldset>
     </form>
   );
 }

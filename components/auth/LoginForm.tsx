@@ -15,24 +15,45 @@ export function LoginForm() {
     setPending(true);
 
     const formData = new FormData(event.currentTarget);
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email: String(formData.get("email")),
-      password: String(formData.get("password")),
-    });
 
-    if (error) {
-      setError("Anmeldung fehlgeschlagen. E-Mail oder Passwort prüfen.");
+    try {
+      const supabase = createClient();
+      const { error: loginError } = await supabase.auth.signInWithPassword({
+        email: String(formData.get("email") ?? "").trim(),
+        password: String(formData.get("password") ?? ""),
+      });
+
+      if (loginError) {
+        const dienstNichtErreichbar =
+          loginError.name === "AuthRetryableFetchError" ||
+          (typeof loginError.status === "number" && loginError.status >= 500);
+        const zuVieleVersuche =
+          loginError.status === 429 ||
+          loginError.code === "over_request_rate_limit";
+
+        setError(
+          dienstNichtErreichbar
+            ? "Der Anmeldedienst ist gerade nicht erreichbar. Bitte später erneut versuchen."
+            : zuVieleVersuche
+              ? "Zu viele Anmeldeversuche. Bitte kurz warten und erneut versuchen."
+            : "Anmeldung fehlgeschlagen. E-Mail oder Passwort prüfen.",
+        );
+        return;
+      }
+
+      router.push("/berichte");
+      router.refresh();
+    } catch {
+      setError(
+        "Der Anmeldedienst ist gerade nicht erreichbar. Bitte später erneut versuchen.",
+      );
+    } finally {
       setPending(false);
-      return;
     }
-
-    router.push("/berichte");
-    router.refresh();
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} aria-busy={pending} className="space-y-4">
       <div>
         <label htmlFor="email" className="label-tag mb-1 block">
           E-Mail
@@ -43,6 +64,8 @@ export function LoginForm() {
           type="email"
           required
           autoComplete="email"
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? "login-fehler" : undefined}
           className="field-input"
         />
       </div>
@@ -57,12 +80,18 @@ export function LoginForm() {
           type="password"
           required
           autoComplete="current-password"
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? "login-fehler" : undefined}
           className="field-input"
         />
       </div>
 
       {error && (
-        <p className="border-brick bg-brick-bg text-brick border-[1.5px] p-3 text-sm">
+        <p
+          id="login-fehler"
+          role="alert"
+          className="border-brick bg-brick-bg text-brick border-[1.5px] p-3 text-sm"
+        >
           {error}
         </p>
       )}

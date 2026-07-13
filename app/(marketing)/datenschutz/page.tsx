@@ -39,7 +39,12 @@ export default function DatenschutzPage() {
               zusätzlich verarbeitet: Zugangsdaten (E-Mail-Adresse),
               Sitzungs-Cookies sowie die von Nutzern eingegebenen
               Berichtsdaten (Baustellen, Namen und Arbeitsstunden von
-              Personal, Material, Stichpunkte, Fotos).
+              Personal, Material, Stichpunkte, Fotos) sowie bei einem
+              Dokumentimport der aus der hochgeladenen PDF- oder Word-Datei
+              ausgelesene Text. Die hochgeladene Dokumentdatei selbst wird
+              nicht dauerhaft gespeichert. Zur Begrenzung der KI-Nutzung
+              werden Art und Zeitpunkt eines KI-Aufrufs sowie die Konto- und
+              gegebenenfalls Berichts-ID protokolliert.
             </p>
           </section>
 
@@ -69,7 +74,8 @@ export default function DatenschutzPage() {
               Dateispeicher: Supabase (Serverstandort Frankfurt am Main,
               EU). KI-Textgenerierung: Anthropic PBC (USA) — zur Generierung
               werden die eingegebenen Berichtsdaten (Stichpunkte, Personal,
-              Material, Wetter) an die Anthropic-API übermittelt. Mit den
+              Material, Wetter) und beim Dokumentimport ein begrenzter
+              Textauszug des Dokuments an die Anthropic-API übermittelt. Mit den
               Dienstleistern bestehen Auftragsverarbeitungsverträge; für
               Übermittlungen in die USA stützen sich die Anbieter auf das
               EU-US Data Privacy Framework bzw. Standardvertragsklauseln.

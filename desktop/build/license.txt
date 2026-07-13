@@ -1,0 +1,31 @@
+TAGESBERICHTE - NUTZUNGSBEDINGUNGEN / EULA
+Copyright (c) 2026 Elias Kuemmel. Alle Rechte vorbehalten.
+
+Diese Desktop-Anwendung ("Tagesberichte") ist proprietaere Software von
+Elias Kuemmel (eliaskummel@gmail.com). Mit der Installation stimmen Sie
+folgenden Bedingungen zu:
+
+1. Nutzung ist nur Personen gestattet, denen der Urheber oder ein
+   autorisiertes Kundenunternehmen Zugangsdaten fuer die Anwendung
+   bereitgestellt hat.
+
+2. Ohne ausdrueckliche schriftliche Genehmigung des Urhebers ist es NICHT
+   gestattet, den Quellcode oder Teile davon zu kopieren, zu veraendern,
+   weiterzuverbreiten, in eigene Projekte zu uebernehmen, kommerziell zu
+   nutzen, weiterzuverkaufen, zu lizenzieren oder abgeleitete Werke davon
+   zu erstellen.
+
+3. Diese Desktop-App ist ein reiner Wrapper um die unter
+   https://swietelsky-faber-tagesbericht.vercel.app gehostete Web-Anwendung.
+   Es gelten zusaetzlich die Nutzungsbedingungen und die
+   Datenschutzerklaerung dieser Anwendung, abrufbar unter
+   /nutzungsbedingungen und /datenschutz der genannten Domain.
+
+4. DIE SOFTWARE WIRD OHNE JEDE GEWAEHRLEISTUNG BEREITGESTELLT, WEDER
+   AUSDRUECKLICH NOCH STILLSCHWEIGEND.
+
+Die vollstaendige Lizenz liegt der LICENSE-Datei im Quell-Repository bei:
+https://github.com/kr511/tagesberichte/blob/main/LICENSE
+
+Wenn Sie diesen Bedingungen nicht zustimmen, brechen Sie die Installation
+bitte ab.

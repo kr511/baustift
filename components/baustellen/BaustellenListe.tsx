@@ -1,23 +1,26 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { getAuthenticatedClient } from "@/lib/supabase/auth";
 import { BaustelleStatusSelect } from "@/components/baustellen/BaustelleStatusSelect";
 
 export async function BaustellenListe() {
-  const supabase = await createClient();
-  const { data: baustellen, error } = await supabase
+  const auth = await getAuthenticatedClient();
+  if (!auth) throw new Error("Nicht angemeldet.");
+
+  const { data: baustellen, error } = await auth.supabase
     .from("baustellen")
     .select("id, name, adresse, auftraggeber, status")
     .order("created_at", { ascending: false });
 
   if (error) {
-    return (
-      <p className="border-brick bg-brick-bg text-brick border-[1.5px] p-4 text-sm">
-        Baustellen konnten nicht geladen werden: {error.message}
-      </p>
-    );
+    console.error("Baustellen konnten nicht geladen werden:", error);
+    throw new Error("Baustellen konnten nicht geladen werden.");
   }
 
-  if (!baustellen || baustellen.length === 0) {
+  if (!baustellen) {
+    throw new Error("Baustellen konnten nicht geladen werden.");
+  }
+
+  if (baustellen.length === 0) {
     return (
       <p className="card border-dashed p-10 text-center text-sm text-ink-soft">
         Noch keine Baustellen angelegt.

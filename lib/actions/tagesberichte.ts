@@ -1,242 +1,351 @@
 "use server";
 
-import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { z } from "zod";
+import { getAuthenticatedClient } from "@/lib/supabase/auth";
 
 const personalZeileSchema = z.object({
-  name: z.string().trim().min(1),
-  stunden: z.coerce.number().min(0).max(24),
-  taetigkeit: z.string().trim().optional(),
+  name: z.string().trim().min(1).max(200),
+  stunden: z.preprocess(
+    (value) => (value === "" || value === null ? undefined : value),
+    z.coerce
+      .number({ error: "Bitte eine gültige Stundenzahl angeben." })
+      .min(0)
+      .max(24),
+  ),
+  taetigkeit: z.string().trim().max(500).optional(),
 });
 
 const materialZeileSchema = z.object({
-  bezeichnung: z.string().trim().min(1),
-  menge: z.string().trim().optional(),
+  bezeichnung: z.string().trim().min(1).max(300),
+  menge: z.string().trim().max(300).optional(),
   typ: z.enum(["material", "geraet"]),
 });
 
 const fotoZeileSchema = z.object({
-  storage_path: z.string().trim().min(1),
-  dateiname: z.string().trim().optional(),
+  storage_path: z
+    .string()
+    .trim()
+    .max(1000)
+    .regex(
+      /^entwuerfe\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}-[A-Za-z0-9._-]+$/,
+    ),
+  dateiname: z.string().trim().max(500).optional(),
 });
 
 const tagesberichtSchema = z.object({
   baustelle_id: z.string().uuid("Bitte eine Baustelle auswählen."),
-  datum: z.string().min(1, "Datum ist erforderlich."),
-  wetter: z.string().trim().min(1, "Wetter ist erforderlich."),
-  stichpunkte: z.string().trim().min(1, "Stichpunkte sind erforderlich."),
-  created_by: z.string().trim().optional(),
-  personal_json: z.string().optional(),
-  material_json: z.string().optional(),
-  foto_json: z.string().optional(),
+  datum: z.iso.date("Bitte ein gültiges Datum angeben."),
+  wetter: z
+    .string()
+    .trim()
+    .min(1, "Wetter ist erforderlich.")
+    .max(500, "Die Wetterangabe ist zu lang."),
+  stichpunkte: z
+    .string()
+    .trim()
+    .min(1, "Stichpunkte sind erforderlich.")
+    .max(20_000, "Die Stichpunkte sind zu lang."),
+  created_by: z.string().trim().max(200, "Der Name ist zu lang.").optional(),
+  personal_json: z.string(),
+  material_json: z.string(),
+  foto_json: z.string(),
 });
 
+type TagesberichtFormFeld = keyof z.infer<typeof tagesberichtSchema>;
+
 export interface TagesberichtFormState {
-  errors?: Partial<
-    Record<keyof z.infer<typeof tagesberichtSchema>, string[]>
-  >;
+  errors?: Partial<Record<TagesberichtFormFeld, string[]>>;
   message?: string;
 }
 
+type PersonalZeile = z.infer<typeof personalZeileSchema>;
+type MaterialZeile = z.infer<typeof materialZeileSchema>;
+type FotoZeile = z.infer<typeof fotoZeileSchema>;
+
 function parseJsonArray<T>(
-  raw: string | undefined,
-  schema: z.ZodType<T>,
-): T[] {
-  if (!raw) return [];
+  raw: string,
+  schema: z.ZodType<T[]>,
+): { data: T[] } | { error: string } {
   try {
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed
-      .map((item) => schema.safeParse(item))
-      .filter((result): result is z.ZodSafeParseSuccess<T> => result.success)
-      .map((result) => result.data);
+    const parsed: unknown = JSON.parse(raw);
+    const validated = schema.safeParse(parsed);
+    if (!validated.success) {
+      return { error: "Mindestens eine Zeile enthält ungültige Angaben." };
+    }
+    return { data: validated.data };
   } catch {
-    return [];
+    return { error: "Die übermittelten Listendaten sind ungültig." };
   }
+}
+
+function validiereFormData(formData: FormData):
+  | {
+      data: z.infer<typeof tagesberichtSchema>;
+      personal: PersonalZeile[];
+      material: MaterialZeile[];
+      fotos: FotoZeile[];
+    }
+  | { state: TagesberichtFormState } {
+  const validated = tagesberichtSchema.safeParse({
+    baustelle_id: formData.get("baustelle_id"),
+    datum: formData.get("datum"),
+    wetter: formData.get("wetter"),
+    stichpunkte: formData.get("stichpunkte"),
+    created_by: formData.get("created_by"),
+    personal_json: formData.get("personal_json"),
+    material_json: formData.get("material_json"),
+    foto_json: formData.get("foto_json"),
+  });
+
+  if (!validated.success) {
+    return { state: { errors: validated.error.flatten().fieldErrors } };
+  }
+
+  const personal = parseJsonArray(
+    validated.data.personal_json,
+    z.array(personalZeileSchema).max(100),
+  );
+  const material = parseJsonArray(
+    validated.data.material_json,
+    z.array(materialZeileSchema).max(100),
+  );
+  const fotos = parseJsonArray(
+    validated.data.foto_json,
+    z.array(fotoZeileSchema).max(30),
+  );
+
+  const errors: TagesberichtFormState["errors"] = {};
+  if ("error" in personal) errors.personal_json = [personal.error];
+  if ("error" in material) errors.material_json = [material.error];
+  if ("error" in fotos) errors.foto_json = [fotos.error];
+
+  if ("error" in personal || "error" in material || "error" in fotos) {
+    return {
+      state: {
+        errors,
+        message:
+          "Personal, Material oder Fotos enthalten ungültige Angaben. Bitte prüfen und erneut speichern.",
+      },
+    };
+  }
+
+  return {
+    data: validated.data,
+    personal: personal.data,
+    material: material.data,
+    fotos: fotos.data,
+  };
+}
+
+function rpcFehlerNachricht(code?: string): string {
+  if (code === "42501") return "Die Sitzung ist abgelaufen. Bitte neu anmelden.";
+  if (code === "P0004") {
+    return "Mindestens ein Foto wurde nicht gefunden oder gehört nicht zu dieser Sitzung. Bitte die Fotoauswahl prüfen.";
+  }
+  if (code === "55000") {
+    return "Der Tagesbericht ist bereits final und kann nicht mehr geändert werden.";
+  }
+  if (code === "P0002") return "Der Tagesbericht wurde nicht gefunden.";
+  if (code === "23503") return "Die ausgewählte Baustelle wurde nicht gefunden.";
+  if (code === "40001") {
+    return "Der Tagesbericht wurde inzwischen an anderer Stelle geändert. Bitte die Seite neu laden und die Eingaben erneut prüfen.";
+  }
+  return "Tagesbericht konnte nicht gespeichert werden. Bitte erneut versuchen.";
+}
+
+async function entferneFotos(
+  supabase: NonNullable<Awaited<ReturnType<typeof getAuthenticatedClient>>>["supabase"],
+  paths: string[],
+) {
+  if (paths.length === 0) return;
+  const { error } = await supabase.storage.from("tagesbericht-fotos").remove(paths);
+  if (error) console.error("Foto-Bereinigung fehlgeschlagen:", error);
 }
 
 export async function createTagesbericht(
   _prevState: TagesberichtFormState,
   formData: FormData,
 ): Promise<TagesberichtFormState> {
-  const validated = tagesberichtSchema.safeParse({
-    baustelle_id: formData.get("baustelle_id"),
-    datum: formData.get("datum"),
-    wetter: formData.get("wetter"),
-    stichpunkte: formData.get("stichpunkte"),
-    created_by: formData.get("created_by"),
-    personal_json: formData.get("personal_json"),
-    material_json: formData.get("material_json"),
-    foto_json: formData.get("foto_json"),
-  });
+  const eingabe = validiereFormData(formData);
+  if ("state" in eingabe) return eingabe.state;
 
-  if (!validated.success) {
-    return { errors: validated.error.flatten().fieldErrors };
+  const auth = await getAuthenticatedClient();
+  if (!auth) {
+    return { message: "Die Sitzung ist abgelaufen. Bitte neu anmelden." };
   }
 
-  const personal = parseJsonArray(validated.data.personal_json, personalZeileSchema);
-  const material = parseJsonArray(validated.data.material_json, materialZeileSchema);
-  const fotos = parseJsonArray(validated.data.foto_json, fotoZeileSchema);
+  const { data: berichtId, error } = await auth.supabase.rpc(
+    "speichere_tagesbericht",
+    {
+      p_id: null,
+      p_erwartete_updated_at: null,
+      p_baustelle_id: eingabe.data.baustelle_id,
+      p_datum: eingabe.data.datum,
+      p_wetter: eingabe.data.wetter,
+      p_stichpunkte: eingabe.data.stichpunkte,
+      p_created_by: eingabe.data.created_by || null,
+      p_personal: eingabe.personal,
+      p_material: eingabe.material,
+      p_fotos: eingabe.fotos,
+    },
+  );
 
-  const supabase = await createClient();
-
-  const { data: bericht, error } = await supabase
-    .from("tagesberichte")
-    .insert({
-      baustelle_id: validated.data.baustelle_id,
-      datum: validated.data.datum,
-      wetter: validated.data.wetter,
-      stichpunkte: validated.data.stichpunkte,
-      created_by: validated.data.created_by || null,
-    })
-    .select("id")
-    .single();
-
-  if (error || !bericht) {
+  if (error || !berichtId) {
     console.error("createTagesbericht fehlgeschlagen:", error);
-    return {
-      message: "Tagesbericht konnte nicht angelegt werden. Bitte erneut versuchen.",
-    };
-  }
-
-  if (personal.length > 0) {
-    await supabase.from("tagesbericht_personal").insert(
-      personal.map((p) => ({
-        tagesbericht_id: bericht.id,
-        name: p.name,
-        stunden: p.stunden,
-        taetigkeit: p.taetigkeit || null,
-      })),
-    );
-  }
-
-  if (material.length > 0) {
-    await supabase.from("tagesbericht_material").insert(
-      material.map((m) => ({
-        tagesbericht_id: bericht.id,
-        bezeichnung: m.bezeichnung,
-        menge: m.menge || null,
-        typ: m.typ,
-      })),
-    );
-  }
-
-  if (fotos.length > 0) {
-    await supabase.from("tagesbericht_fotos").insert(
-      fotos.map((f) => ({
-        tagesbericht_id: bericht.id,
-        storage_path: f.storage_path,
-        dateiname: f.dateiname || null,
-      })),
-    );
+    return { message: rpcFehlerNachricht(error?.code) };
   }
 
   revalidatePath("/berichte");
-  redirect(`/berichte/${bericht.id}`);
+  redirect(`/berichte/${berichtId}`);
 }
 
 export async function updateTagesbericht(
   id: string,
+  erwarteteUpdatedAt: string,
   _prevState: TagesberichtFormState,
   formData: FormData,
 ): Promise<TagesberichtFormState> {
-  const validated = tagesberichtSchema.safeParse({
-    baustelle_id: formData.get("baustelle_id"),
-    datum: formData.get("datum"),
-    wetter: formData.get("wetter"),
-    stichpunkte: formData.get("stichpunkte"),
-    created_by: formData.get("created_by"),
-    personal_json: formData.get("personal_json"),
-    material_json: formData.get("material_json"),
-    foto_json: formData.get("foto_json"),
-  });
+  const version = z
+    .object({
+      id: z.string().uuid(),
+      updatedAt: z.iso.datetime({ offset: true }),
+    })
+    .safeParse({ id, updatedAt: erwarteteUpdatedAt });
+  if (!version.success) return { message: "Ungültiger Tagesbericht." };
 
-  if (!validated.success) {
-    return { errors: validated.error.flatten().fieldErrors };
+  const eingabe = validiereFormData(formData);
+  if ("state" in eingabe) return eingabe.state;
+
+  const auth = await getAuthenticatedClient();
+  if (!auth) {
+    return { message: "Die Sitzung ist abgelaufen. Bitte neu anmelden." };
   }
 
-  const personal = parseJsonArray(validated.data.personal_json, personalZeileSchema);
-  const material = parseJsonArray(validated.data.material_json, materialZeileSchema);
-  const fotos = parseJsonArray(validated.data.foto_json, fotoZeileSchema);
+  const { data: vorhandeneFotos, error: fotoLeseFehler } = await auth.supabase
+    .from("tagesbericht_fotos")
+    .select("storage_path")
+    .eq("tagesbericht_id", version.data.id);
 
-  const supabase = await createClient();
+  if (fotoLeseFehler) {
+    console.error("Vorhandene Fotos konnten nicht gelesen werden:", fotoLeseFehler);
+    return { message: "Tagesbericht konnte nicht vorbereitet werden. Bitte erneut versuchen." };
+  }
 
-  const { error } = await supabase
-    .from("tagesberichte")
-    .update({
-      baustelle_id: validated.data.baustelle_id,
-      datum: validated.data.datum,
-      wetter: validated.data.wetter,
-      stichpunkte: validated.data.stichpunkte,
-      created_by: validated.data.created_by || null,
-    })
-    .eq("id", id);
+  const altePfade = new Set((vorhandeneFotos ?? []).map((foto) => foto.storage_path));
+  const neuePfade = new Set(eingabe.fotos.map((foto) => foto.storage_path));
+
+  const { error } = await auth.supabase.rpc("speichere_tagesbericht", {
+    p_id: version.data.id,
+    p_erwartete_updated_at: version.data.updatedAt,
+    p_baustelle_id: eingabe.data.baustelle_id,
+    p_datum: eingabe.data.datum,
+    p_wetter: eingabe.data.wetter,
+    p_stichpunkte: eingabe.data.stichpunkte,
+    p_created_by: eingabe.data.created_by || null,
+    p_personal: eingabe.personal,
+    p_material: eingabe.material,
+    p_fotos: eingabe.fotos,
+  });
 
   if (error) {
     console.error("updateTagesbericht fehlgeschlagen:", error);
-    return { message: "Tagesbericht konnte nicht gespeichert werden. Bitte erneut versuchen." };
+    return { message: rpcFehlerNachricht(error.code) };
   }
 
-  // Zeilenlisten werden komplett ersetzt statt einzeln abgeglichen — bei der
-  // geringen Zeilenzahl pro Bericht einfacher und robuster als ein Diff.
-  await supabase.from("tagesbericht_personal").delete().eq("tagesbericht_id", id);
-  if (personal.length > 0) {
-    await supabase.from("tagesbericht_personal").insert(
-      personal.map((p) => ({
-        tagesbericht_id: id,
-        name: p.name,
-        stunden: p.stunden,
-        taetigkeit: p.taetigkeit || null,
-      })),
-    );
-  }
-
-  await supabase.from("tagesbericht_material").delete().eq("tagesbericht_id", id);
-  if (material.length > 0) {
-    await supabase.from("tagesbericht_material").insert(
-      material.map((m) => ({
-        tagesbericht_id: id,
-        bezeichnung: m.bezeichnung,
-        menge: m.menge || null,
-        typ: m.typ,
-      })),
-    );
-  }
-
-  await supabase.from("tagesbericht_fotos").delete().eq("tagesbericht_id", id);
-  if (fotos.length > 0) {
-    await supabase.from("tagesbericht_fotos").insert(
-      fotos.map((f) => ({
-        tagesbericht_id: id,
-        storage_path: f.storage_path,
-        dateiname: f.dateiname || null,
-      })),
-    );
-  }
+  await entferneFotos(
+    auth.supabase,
+    [...altePfade].filter((path) => !neuePfade.has(path)),
+  );
 
   revalidatePath("/berichte");
-  redirect(`/berichte/${id}`);
+  revalidatePath(`/berichte/${version.data.id}`);
+  redirect(`/berichte/${version.data.id}`);
 }
 
-export async function updateBerichtText(id: string, berichtText: string) {
-  const supabase = await createClient();
-  await supabase
-    .from("tagesberichte")
-    .update({ bericht_text: berichtText })
-    .eq("id", id);
-
-  revalidatePath(`/berichte/${id}`);
+export interface MutationResult {
+  ok: boolean;
+  error?: string;
+  updatedAt?: string;
 }
 
-export async function finalisiereTagesbericht(id: string) {
-  const supabase = await createClient();
-  await supabase
-    .from("tagesberichte")
-    .update({ status: "final" })
-    .eq("id", id);
+export async function updateBerichtText(
+  id: string,
+  berichtText: string,
+  erwarteteUpdatedAt: string,
+): Promise<MutationResult> {
+  const validated = z
+    .object({
+      id: z.string().uuid(),
+      berichtText: z.string().trim().min(1).max(50_000),
+      updatedAt: z.iso.datetime({ offset: true }),
+    })
+    .safeParse({ id, berichtText, updatedAt: erwarteteUpdatedAt });
 
-  revalidatePath(`/berichte/${id}`);
+  if (!validated.success) {
+    return { ok: false, error: "Der Berichtstext ist leer oder zu lang." };
+  }
+
+  const auth = await getAuthenticatedClient();
+  if (!auth) return { ok: false, error: "Die Sitzung ist abgelaufen." };
+
+  const { data: updatedAt, error } = await auth.supabase.rpc("speichere_bericht_text", {
+    p_id: validated.data.id,
+    p_bericht_text: validated.data.berichtText,
+    p_erwartete_updated_at: validated.data.updatedAt,
+  });
+
+  if (error) {
+    console.error("updateBerichtText fehlgeschlagen:", error);
+    return {
+      ok: false,
+      error:
+        error.code === "55000"
+          ? "Finalisierte Tagesberichte können nicht mehr geändert werden."
+          : rpcFehlerNachricht(error.code),
+    };
+  }
+
+  revalidatePath(`/berichte/${validated.data.id}`);
+  if (!updatedAt) return { ok: false, error: "Bericht konnte nicht gespeichert werden." };
+  return { ok: true, updatedAt };
+}
+
+export async function finalisiereTagesbericht(
+  id: string,
+  erwarteteUpdatedAt: string,
+): Promise<MutationResult> {
+  const validated = z
+    .object({
+      id: z.string().uuid(),
+      updatedAt: z.iso.datetime({ offset: true }),
+    })
+    .safeParse({ id, updatedAt: erwarteteUpdatedAt });
+  if (!validated.success) return { ok: false, error: "Ungültiger Tagesbericht." };
+
+  const auth = await getAuthenticatedClient();
+  if (!auth) return { ok: false, error: "Die Sitzung ist abgelaufen." };
+
+  const { data: updatedAt, error } = await auth.supabase.rpc("finalisiere_tagesbericht", {
+    p_id: validated.data.id,
+    p_erwartete_updated_at: validated.data.updatedAt,
+  });
+
+  if (error) {
+    console.error("finalisiereTagesbericht fehlgeschlagen:", error);
+    return {
+      ok: false,
+      error:
+        error.code === "23514"
+          ? "Vor dem Finalisieren muss ein Berichtstext gespeichert sein."
+          : rpcFehlerNachricht(error.code),
+    };
+  }
+
+  if (!updatedAt) return { ok: false, error: "Tagesbericht konnte nicht finalisiert werden." };
+
+  revalidatePath(`/berichte/${validated.data.id}`);
   revalidatePath("/berichte");
+  return { ok: true, updatedAt };
 }

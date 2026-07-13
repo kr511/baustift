@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { getAuthenticatedClient } from "@/lib/supabase/auth";
 import { formatDatum } from "@/lib/format";
 import { StatusBadge } from "@/components/berichte/StatusBadge";
 
@@ -8,11 +8,14 @@ interface BerichteUebersichtProps {
 }
 
 export async function BerichteUebersicht({ baustelleId }: BerichteUebersichtProps) {
-  const supabase = await createClient();
+  const auth = await getAuthenticatedClient();
+  if (!auth) throw new Error("Nicht angemeldet.");
 
-  let query = supabase
+  let query = auth.supabase
     .from("tagesberichte")
-    .select("id, datum, wetter, status, baustellen(id, name)")
+    .select(
+      "id, datum, wetter, status, baustelle_name_snapshot, baustellen(id, name)",
+    )
     .order("datum", { ascending: false })
     .order("created_at", { ascending: false });
 
@@ -23,14 +26,15 @@ export async function BerichteUebersicht({ baustelleId }: BerichteUebersichtProp
   const { data: berichte, error } = await query;
 
   if (error) {
-    return (
-      <p className="border-brick bg-brick-bg text-brick border-[1.5px] p-4 text-sm">
-        Tagesberichte konnten nicht geladen werden: {error.message}
-      </p>
-    );
+    console.error("Tagesberichte konnten nicht geladen werden:", error);
+    throw new Error("Tagesberichte konnten nicht geladen werden.");
   }
 
-  if (!berichte || berichte.length === 0) {
+  if (!berichte) {
+    throw new Error("Tagesberichte konnten nicht geladen werden.");
+  }
+
+  if (berichte.length === 0) {
     return (
       <p className="card border-dashed p-10 text-center text-sm text-ink-soft">
         Noch keine Tagesberichte vorhanden.
@@ -64,7 +68,11 @@ export async function BerichteUebersicht({ baustelleId }: BerichteUebersichtProp
                 >
                   <div>
                     <p className="font-semibold text-ink">
-                      {bericht.baustellen?.name ?? "Unbekannte Baustelle"}
+                      {bericht.status === "final"
+                        ? (bericht.baustelle_name_snapshot ??
+                          bericht.baustellen?.name ??
+                          "Unbekannte Baustelle")
+                        : (bericht.baustellen?.name ?? "Unbekannte Baustelle")}
                     </p>
                     <p className="font-mono text-xs text-ink-soft">{bericht.wetter}</p>
                   </div>

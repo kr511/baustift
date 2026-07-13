@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
+import { z } from "zod";
+import { getAuthenticatedClient } from "@/lib/supabase/auth";
 
 export interface TagesberichtVollstaendig {
   id: string;
@@ -7,6 +8,7 @@ export interface TagesberichtVollstaendig {
   stichpunkte: string;
   bericht_text: string | null;
   status: "entwurf" | "final";
+  updated_at: string;
   created_by: string | null;
   baustelle: { id: string; name: string } | null;
   personal: { name: string; stunden: number; taetigkeit: string | null }[];
@@ -17,45 +19,67 @@ export interface TagesberichtVollstaendig {
 export async function getTagesberichtVollstaendig(
   id: string,
 ): Promise<TagesberichtVollstaendig | null> {
-  const supabase = await createClient();
+  const validatedId = z.string().uuid().safeParse(id);
+  if (!validatedId.success) return null;
 
-  const { data: bericht } = await supabase
+  const auth = await getAuthenticatedClient();
+  if (!auth) throw new Error("Nicht angemeldet.");
+
+  const { data: bericht, error: berichtError } = await auth.supabase
     .from("tagesberichte")
     .select(
-      "id, datum, wetter, stichpunkte, bericht_text, status, created_by, baustellen(id, name)",
+      "id, datum, wetter, stichpunkte, bericht_text, status, updated_at, created_by, baustelle_name_snapshot, baustellen(id, name), tagesbericht_personal(name, stunden, taetigkeit), tagesbericht_material(bezeichnung, menge, typ), tagesbericht_fotos(storage_path, dateiname)",
     )
-    .eq("id", id)
-    .single();
+    .eq("id", validatedId.data)
+    .maybeSingle();
+
+  if (berichtError) {
+    console.error("Tagesbericht konnte nicht geladen werden:", berichtError);
+    throw new Error("Tagesbericht konnte nicht geladen werden.");
+  }
 
   if (!bericht) return null;
 
-  const [{ data: personal }, { data: material }, { data: fotos }] = await Promise.all([
-    supabase
-      .from("tagesbericht_personal")
-      .select("name, stunden, taetigkeit")
-      .eq("tagesbericht_id", id),
-    supabase
-      .from("tagesbericht_material")
-      .select("bezeichnung, menge, typ")
-      .eq("tagesbericht_id", id),
-    supabase
-      .from("tagesbericht_fotos")
-      .select("storage_path, dateiname")
-      .eq("tagesbericht_id", id),
-  ]);
+  const fotoPfade = bericht.tagesbericht_fotos.map((foto) => foto.storage_path);
+  const { data: signierteUrls, error: signierFehler } =
+    fotoPfade.length > 0
+      ? await auth.supabase.storage
+          .from("tagesbericht-fotos")
+          .createSignedUrls(fotoPfade, 60 * 60)
+      : { data: [], error: null };
 
-  const fotosMitUrl = await Promise.all(
-    (fotos ?? []).map(async (foto) => {
-      const { data: signed } = await supabase.storage
-        .from("tagesbericht-fotos")
-        .createSignedUrl(foto.storage_path, 60 * 60);
-      return {
-        storage_path: foto.storage_path,
-        dateiname: foto.dateiname,
-        url: signed?.signedUrl ?? "",
-      };
-    }),
+  if (signierFehler) {
+    console.error("Foto-URLs konnten nicht erstellt werden:", signierFehler);
+  }
+
+  const urlNachPfad = new Map(
+    (signierteUrls ?? []).map((eintrag) => [eintrag.path, eintrag]),
   );
+
+  const fotosMitUrl = bericht.tagesbericht_fotos.map((foto) => {
+    const eintrag = urlNachPfad.get(foto.storage_path);
+    if (!eintrag || eintrag.error) {
+      console.error("Foto-URL konnte nicht erstellt werden:", {
+        storagePath: foto.storage_path,
+        error: eintrag?.error,
+      });
+    }
+    return {
+      storage_path: foto.storage_path,
+      dateiname: foto.dateiname,
+      url: eintrag?.signedUrl ?? "",
+    };
+  });
+
+  const baustelle = bericht.baustellen
+    ? {
+        ...bericht.baustellen,
+        name:
+          bericht.status === "final"
+            ? (bericht.baustelle_name_snapshot ?? bericht.baustellen.name)
+            : bericht.baustellen.name,
+      }
+    : null;
 
   return {
     id: bericht.id,
@@ -64,10 +88,11 @@ export async function getTagesberichtVollstaendig(
     stichpunkte: bericht.stichpunkte,
     bericht_text: bericht.bericht_text,
     status: bericht.status,
+    updated_at: bericht.updated_at,
     created_by: bericht.created_by,
-    baustelle: bericht.baustellen,
-    personal: personal ?? [],
-    material: material ?? [],
+    baustelle,
+    personal: bericht.tagesbericht_personal,
+    material: bericht.tagesbericht_material,
     fotos: fotosMitUrl,
   };
 }

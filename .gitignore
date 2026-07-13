@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -43,3 +44,13 @@ next-env.d.ts
 # electron desktop wrapper
 desktop/node_modules/
 desktop/dist/
+
+# graphify local output (contains absolute local paths)
+/graphify-out/
+
+# local editor and audit artifacts
+/.vscode/
+/audit-*/
+
+# local presentation credentials (never commit)
+/demo-credentials.local.txt

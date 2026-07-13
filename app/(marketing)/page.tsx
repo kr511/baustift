@@ -186,7 +186,9 @@ export default function LandingPage() {
               Die Windows-App installiert sich mit einem Doppelklick — kein
               Admin-Konto nötig. Für gesperrte Firmen-PCs gibt es die portable
               Version ohne Installation. Und wer nichts installieren will:
-              Das Tool läuft genauso komplett im Browser.
+              Das Tool läuft genauso komplett im Browser. Die Desktop-App ist
+              ein sicherer Zugang zur Web-Anwendung und benötigt deshalb eine
+              Internetverbindung sowie freigeschaltete Zugangsdaten.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <a href={DOWNLOAD_URL_WINDOWS} className="btn-primary">

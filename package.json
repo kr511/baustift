@@ -8,15 +8,24 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "security:audit": "npm audit --omit=dev --audit-level=high",
+    "security:secrets": "node scripts/secret-scan.mjs",
+    "check": "npm run lint && npm run typecheck && npm run security:secrets && npm run test:preflight && npm run test:units && npm run build",
+    "preflight:presentation": "node --env-file=.env.local scripts/presentation-preflight.mjs",
+    "test:preflight": "node --test scripts/presentation-preflight.test.mjs",
+    "test:units": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/untrusted.test.mjs scripts/secret-scan.test.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.110.2",
+    "mammoth": "^1.12.0",
     "next": "16.2.10",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "unpdf": "^1.6.2",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -28,5 +37,8 @@
     "eslint-config-next": "16.2.10",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "postcss": "8.5.18"
   }
 }

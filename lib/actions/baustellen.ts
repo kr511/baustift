@@ -2,14 +2,27 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { getAuthenticatedClient } from "@/lib/supabase/auth";
 
 const baustelleSchema = z.object({
-  name: z.string().trim().min(1, "Name ist erforderlich."),
-  adresse: z.string().trim().optional(),
-  auftraggeber: z.string().trim().optional(),
-  notiz: z.string().trim().optional(),
-  created_by: z.string().trim().optional(),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Name ist erforderlich.")
+    .max(300, "Der Name ist zu lang."),
+  adresse: z.string().trim().max(500, "Die Adresse ist zu lang.").optional(),
+  auftraggeber: z
+    .string()
+    .trim()
+    .max(300, "Der Auftraggeber ist zu lang.")
+    .optional(),
+  notiz: z.string().trim().max(5_000, "Die Notiz ist zu lang.").optional(),
+  created_by: z.string().trim().max(200, "Der Name ist zu lang.").optional(),
+});
+
+const baustelleStatusSchema = z.object({
+  id: z.string().uuid(),
+  status: z.enum(["aktiv", "pausiert", "abgeschlossen"]),
 });
 
 export interface BaustelleFormState {
@@ -33,8 +46,12 @@ export async function createBaustelle(
     return { errors: validated.error.flatten().fieldErrors };
   }
 
-  const supabase = await createClient();
-  const { error } = await supabase.from("baustellen").insert({
+  const auth = await getAuthenticatedClient();
+  if (!auth) {
+    return { message: "Die Sitzung ist abgelaufen. Bitte neu anmelden." };
+  }
+
+  const { error } = await auth.supabase.from("baustellen").insert({
     name: validated.data.name,
     adresse: validated.data.adresse || null,
     auftraggeber: validated.data.auftraggeber || null,
@@ -56,13 +73,33 @@ export async function createBaustelle(
 export async function setBaustelleStatus(
   baustelleId: string,
   status: "aktiv" | "pausiert" | "abgeschlossen",
-) {
-  const supabase = await createClient();
-  await supabase
+): Promise<{ ok: boolean; error?: string }> {
+  const validated = baustelleStatusSchema.safeParse({ id: baustelleId, status });
+  if (!validated.success) {
+    return { ok: false, error: "Ungültiger Baustellenstatus." };
+  }
+
+  const auth = await getAuthenticatedClient();
+  if (!auth) return { ok: false, error: "Die Sitzung ist abgelaufen." };
+
+  const { data, error } = await auth.supabase
     .from("baustellen")
-    .update({ status })
-    .eq("id", baustelleId);
+    .update({ status: validated.data.status })
+    .eq("id", validated.data.id)
+    .select("id")
+    .maybeSingle();
+
+  if (error || !data) {
+    console.error("setBaustelleStatus fehlgeschlagen:", error);
+    return {
+      ok: false,
+      error: error
+        ? "Status konnte nicht gespeichert werden."
+        : "Baustelle wurde nicht gefunden.",
+    };
+  }
 
   revalidatePath("/baustellen");
   revalidatePath("/berichte");
+  return { ok: true };
 }

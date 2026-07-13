@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: light;
   --color-paper: #f4f0e6;
   --color-paper-raised: #fffdf8;
   --color-ink: #1c1a17;
@@ -15,6 +16,29 @@
   --color-safety-green-bg: #e3ead8;
   --color-brick: #a3341f;
   --color-brick-bg: #f3e2dc;
+}
+
+/* Dark mode: folgt der Geräteeinstellung. Alle Utilities und Komponenten
+   referenzieren die Variablen via var(), daher genügt das Überschreiben der
+   Root-Werte mit einer warmen, blaupausen-artigen Dunkelpalette. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --color-paper: #17140d;
+    --color-paper-raised: #221e16;
+    --color-ink: #ece6d6;
+    --color-ink-soft: #a49b86;
+    --color-graphite: #100e08;
+    --color-graphite-raised: #26221b;
+    --color-line: #363028;
+    --color-line-strong: #4e473a;
+    --color-amber: #edad20;
+    --color-amber-ink: #1c1a17;
+    --color-safety-green: #8ccf98;
+    --color-safety-green-bg: #1b2a1f;
+    --color-brick: #e28a70;
+    --color-brick-bg: #2f1d17;
+  }
 }
 
 @theme inline {
@@ -59,8 +83,8 @@ body {
     -45deg,
     var(--color-amber) 0,
     var(--color-amber) 10px,
-    var(--color-ink) 10px,
-    var(--color-ink) 20px
+    var(--color-graphite) 10px,
+    var(--color-graphite) 20px
   );
 }
 
@@ -186,7 +210,26 @@ body {
 
 @media print {
   @page {
+    size: A4;
     margin: 16mm 16mm;
+  }
+
+  /* Druck immer auf Papier: die helle Palette erzwingen, auch wenn das Gerät
+     im Dark Mode ist (sonst würden Karten/Flächen dunkel gedruckt). */
+  :root {
+    color-scheme: light;
+    --color-paper: #ffffff;
+    --color-paper-raised: #ffffff;
+    --color-ink: #000000;
+    --color-ink-soft: #333333;
+    --color-graphite: #201e1b;
+    --color-graphite-raised: #2c2a26;
+    --color-line: #d8d0bf;
+    --color-line-strong: #1c1a17;
+    --color-safety-green: #26522f;
+    --color-safety-green-bg: #e3ead8;
+    --color-brick: #a3341f;
+    --color-brick-bg: #f3e2dc;
   }
 
   body {

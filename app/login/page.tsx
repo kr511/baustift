@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/auth/LoginForm";
+import { getAuthenticatedClient } from "@/lib/supabase/auth";
 
 export const metadata: Metadata = {
   title: "Anmelden | Swietelsky Faber Tagesberichte",
 };
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const auth = await getAuthenticatedClient();
+  if (auth) redirect("/berichte");
+
   return (
     <div className="bg-blueprint flex min-h-full items-center justify-center px-4 py-16">
       <div className="w-full max-w-sm">

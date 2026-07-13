@@ -1,4 +1,4 @@
-import { formatDatum } from "@/lib/format";
+import { formatDatum, formatStunden } from "@/lib/format";
 import type { TagesberichtVollstaendig } from "@/lib/data/tagesberichte";
 
 export function TagesberichtDruckansicht({
@@ -56,7 +56,7 @@ export function TagesberichtDruckansicht({
               {bericht.personal.map((p, i) => (
                 <tr key={i} className="border-b border-line">
                   <td className="py-1.5">{p.name}</td>
-                  <td className="py-1.5 font-mono">{p.stunden}</td>
+                  <td className="py-1.5 font-mono">{formatStunden(p.stunden)}</td>
                   <td className="py-1.5">{p.taetigkeit ?? "–"}</td>
                 </tr>
               ))}
@@ -107,15 +107,24 @@ export function TagesberichtDruckansicht({
         <section className="mt-6 break-inside-avoid">
           <h2 className="label-tag">Fotos</h2>
           <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {bericht.fotos.map((foto) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={foto.storage_path}
-                src={foto.url}
-                alt={foto.dateiname ?? "Foto"}
-                className="border-ink aspect-square w-full border object-cover"
-              />
-            ))}
+            {bericht.fotos.map((foto) =>
+              foto.url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={foto.storage_path}
+                  src={foto.url}
+                  alt={foto.dateiname ?? "Foto"}
+                  className="border-ink aspect-square w-full border object-cover"
+                />
+              ) : (
+                <div
+                  key={foto.storage_path}
+                  className="border-ink flex aspect-square items-center justify-center border p-2 text-center text-xs text-ink-soft"
+                >
+                  Foto nicht verfügbar
+                </div>
+              ),
+            )}
           </div>
         </section>
       )}

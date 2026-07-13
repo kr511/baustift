@@ -6,6 +6,7 @@ const bigShoulders = Big_Shoulders({
   variable: "--font-shoulders",
   subsets: ["latin"],
   weight: ["600", "700", "800"],
+  adjustFontFallback: false,
 });
 
 const plexSans = IBM_Plex_Sans({
@@ -28,7 +29,10 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#201e1b",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#201e1b" },
+    { media: "(prefers-color-scheme: dark)", color: "#100e08" },
+  ],
 };
 
 export default function RootLayout({

@@ -5,6 +5,8 @@ import { formatDatum } from "@/lib/format";
 import { StatusBadge } from "@/components/berichte/StatusBadge";
 import { KiGenerateButton } from "@/components/berichte/KiGenerateButton";
 import { FinalisierenButton } from "@/components/berichte/FinalisierenButton";
+import { VersandButtons } from "@/components/berichte/VersandButtons";
+import { BerichtBearbeitungsStatusProvider } from "@/components/berichte/BerichtBearbeitungsStatus";
 
 export default async function TagesberichtDetailPage({
   params,
@@ -17,7 +19,10 @@ export default async function TagesberichtDetailPage({
   if (!bericht) notFound();
 
   return (
-    <div className="bg-blueprint min-h-full">
+    <BerichtBearbeitungsStatusProvider
+      initialVersion={bericht.updated_at}
+    >
+      <div className="bg-blueprint min-h-full">
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
         <div className="flex flex-wrap items-start justify-between gap-4 border-b-2 border-ink pb-4">
           <div>
@@ -35,14 +40,24 @@ export default async function TagesberichtDetailPage({
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Link href={`/berichte/${bericht.id}/bearbeiten`} className="btn-secondary">
-              Bearbeiten
-            </Link>
+            {bericht.status === "entwurf" && (
+              <Link href={`/berichte/${bericht.id}/bearbeiten`} className="btn-secondary">
+                Bearbeiten
+              </Link>
+            )}
             <Link href={`/berichte/${bericht.id}/druckansicht`} className="btn-secondary">
               Druckansicht
             </Link>
+            <VersandButtons
+              baustelleName={bericht.baustelle?.name ?? "Unbekannte Baustelle"}
+              datum={bericht.datum}
+              status={bericht.status}
+            />
             {bericht.status === "entwurf" && (
-              <FinalisierenButton tagesberichtId={bericht.id} />
+              <FinalisierenButton
+                tagesberichtId={bericht.id}
+                kannFinalisieren={Boolean(bericht.bericht_text?.trim())}
+              />
             )}
           </div>
         </div>
@@ -72,36 +87,54 @@ export default async function TagesberichtDetailPage({
 
         {bericht.fotos.length > 0 && (
           <div className="mt-6">
-            <span className="label-tag">Fotos</span>
+            <h2 className="label-tag">Fotos</h2>
             <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4">
-              {bericht.fotos.map((foto) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  key={foto.storage_path}
-                  src={foto.url}
-                  alt={foto.dateiname ?? "Foto"}
-                  className="border-ink aspect-square w-full border-[1.5px] object-cover"
-                />
-              ))}
+              {bericht.fotos.map((foto) =>
+                foto.url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={foto.storage_path}
+                    src={foto.url}
+                    alt={foto.dateiname ?? "Foto"}
+                    className="border-ink aspect-square w-full border-[1.5px] object-cover"
+                  />
+                ) : (
+                  <div
+                    key={foto.storage_path}
+                    role="img"
+                    aria-label={`${foto.dateiname ?? "Foto"}: Vorschau nicht verfügbar`}
+                    className="border-ink flex aspect-square items-center justify-center border-[1.5px] p-2 text-center text-xs text-ink-soft"
+                  >
+                    Vorschau nicht verfügbar
+                  </div>
+                ),
+              )}
             </div>
           </div>
         )}
 
         <div className="mt-6">
-          <span className="label-tag mb-2 block">Bericht</span>
-          <KiGenerateButton
-            tagesberichtId={bericht.id}
-            initialBerichtText={bericht.bericht_text}
-          />
+          <h2 className="label-tag mb-2 block">Bericht</h2>
+          {bericht.status === "entwurf" ? (
+            <KiGenerateButton
+              tagesberichtId={bericht.id}
+              initialBerichtText={bericht.bericht_text}
+            />
+          ) : (
+            <div className="card p-4 font-mono text-sm leading-relaxed whitespace-pre-wrap">
+              {bericht.bericht_text}
+            </div>
+          )}
         </div>
 
         <div className="card mt-6 p-4">
-          <span className="label-tag">Stichpunkte (Original)</span>
+          <h2 className="label-tag">Stichpunkte (Original)</h2>
           <p className="mt-1.5 text-sm whitespace-pre-wrap text-ink-soft">
             {bericht.stichpunkte}
           </p>
         </div>
       </div>
-    </div>
+      </div>
+    </BerichtBearbeitungsStatusProvider>
   );
 }

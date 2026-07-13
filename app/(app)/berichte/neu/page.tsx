@@ -1,17 +1,33 @@
-import { createClient } from "@/lib/supabase/server";
-import { TagesberichtForm } from "@/components/berichte/TagesberichtForm";
+import { getAuthenticatedClient } from "@/lib/supabase/auth";
+import { NeuerBerichtFormular } from "@/components/berichte/NeuerBerichtFormular";
+import { z } from "zod";
 
 export default async function NeuerTagesberichtPage({
   searchParams,
 }: {
-  searchParams: Promise<{ baustelle?: string }>;
+  searchParams: Promise<{ baustelle?: string | string[] }>;
 }) {
-  const { baustelle } = await searchParams;
-  const supabase = await createClient();
-  const { data: baustellen } = await supabase
+  const { baustelle: baustelleParameter } = await searchParams;
+  const baustelleResult = z.string().uuid().safeParse(
+    typeof baustelleParameter === "string" ? baustelleParameter : undefined,
+  );
+  const baustelle = baustelleResult.success ? baustelleResult.data : undefined;
+  const auth = await getAuthenticatedClient();
+  if (!auth) throw new Error("Nicht angemeldet.");
+
+  const { data: baustellen, error } = await auth.supabase
     .from("baustellen")
     .select("id, name")
     .order("name");
+
+  if (error) {
+    console.error("Baustellen konnten nicht geladen werden:", error);
+    throw new Error("Baustellen konnten nicht geladen werden.");
+  }
+
+  if (!baustellen) {
+    throw new Error("Baustellen konnten nicht geladen werden.");
+  }
 
   return (
     <div className="bg-blueprint min-h-full">
@@ -25,7 +41,7 @@ export default async function NeuerTagesberichtPage({
           vollständigen Bericht.
         </p>
 
-        {!baustellen || baustellen.length === 0 ? (
+        {baustellen.length === 0 ? (
           <p className="border-amber bg-paper-raised mt-6 border-[1.5px] p-4 text-sm">
             Es ist noch keine Baustelle angelegt. Bitte zuerst unter{" "}
             <a href="/baustellen" className="font-semibold underline">
@@ -35,7 +51,7 @@ export default async function NeuerTagesberichtPage({
           </p>
         ) : (
           <div className="card ticked mt-6 p-6">
-            <TagesberichtForm
+            <NeuerBerichtFormular
               baustellen={baustellen}
               vorausgewaehlteBaustelleId={baustelle}
             />
