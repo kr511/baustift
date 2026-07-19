@@ -1,17 +1,19 @@
-import type { TagesberichtStatus } from "@/lib/types/database";
+import type { TagesberichtWorkflowStatus } from "@/lib/types/tagesbericht-workflow";
 
-const styles: Record<TagesberichtStatus, string> = {
+const styles: Record<TagesberichtWorkflowStatus, string> = {
   entwurf: "text-amber-ink bg-amber border-ink",
-  final: "text-safety-green bg-safety-green-bg border-safety-green",
+  generiert: "text-blue-900 bg-blue-100 border-blue-700",
+  geprueft: "text-safety-green bg-safety-green-bg border-safety-green",
+  final: "text-white bg-safety-green border-ink",
 };
 
-const labels: Record<TagesberichtStatus, string> = {
+const labels: Record<TagesberichtWorkflowStatus, string> = {
   entwurf: "Entwurf",
-  final: "Final",
+  generiert: "Text erstellt",
+  geprueft: "Geprüft",
+  final: "Finalisiert",
 };
 
-export function StatusBadge({ status }: { status: TagesberichtStatus }) {
-  return (
-    <span className={`tag-badge ${styles[status]}`}>{labels[status]}</span>
-  );
+export function StatusBadge({ status }: { status: TagesberichtWorkflowStatus }) {
+  return <span className={`tag-badge ${styles[status]}`}>{labels[status]}</span>;
 }
