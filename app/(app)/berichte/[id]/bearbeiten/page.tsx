@@ -4,6 +4,7 @@ import { getTagesberichtVollstaendig } from "@/lib/data/tagesberichte";
 import { updateTagesbericht } from "@/lib/actions/tagesberichte";
 import { TagesberichtForm } from "@/components/berichte/TagesberichtForm";
 import { getUserFirma } from "@/lib/data/firma";
+import { getUserProfil } from "@/lib/data/profile";
 
 export default async function TagesberichtBearbeitenPage({
   params,
@@ -18,9 +19,10 @@ export default async function TagesberichtBearbeitenPage({
   if (bericht.status === "final") redirect(`/berichte/${id}`);
 
   const supabase = await createClient();
-  const [{ data: baustellen }, firma] = await Promise.all([
+  const [{ data: baustellen }, firma, profil] = await Promise.all([
     supabase.from("baustellen").select("id, name").order("name"),
     getUserFirma(),
+    getUserProfil(),
   ]);
 
   return (
@@ -31,10 +33,11 @@ export default async function TagesberichtBearbeitenPage({
           Tagesbericht
         </h1>
 
-        <div className="card ticked mt-6 p-6">
+        <div className="card ticked mt-6 p-4 sm:p-6">
           <TagesberichtForm
             baustellen={baustellen ?? []}
             firmaId={firma?.id ?? ""}
+            entwurfKey={`baustift:tagesbericht-entwurf:${profil?.id ?? "unbekannt"}:edit:${bericht.id}`}
             action={updateTagesbericht.bind(null, bericht.id)}
             submitLabel="Änderungen speichern"
             initialData={{
@@ -42,21 +45,22 @@ export default async function TagesberichtBearbeitenPage({
               datum: bericht.datum,
               wetter: bericht.wetter,
               stichpunkte: bericht.stichpunkte,
-              personal: bericht.personal.map((p) => ({
-                name: p.name,
-                stunden: String(p.stunden),
-                taetigkeit: p.taetigkeit ?? "",
+              personal: bericht.personal.map((person) => ({
+                name: person.name,
+                stunden: String(person.stunden),
+                taetigkeit: person.taetigkeit ?? "",
               })),
-              material: bericht.material.map((m) => ({
-                bezeichnung: m.bezeichnung,
-                menge: m.menge ?? "",
-                typ: m.typ,
+              material: bericht.material.map((eintrag) => ({
+                bezeichnung: eintrag.bezeichnung,
+                menge: eintrag.menge ?? "",
+                typ: eintrag.typ,
               })),
-              fotos: bericht.fotos.map((f) => ({
-                storage_path: f.storage_path,
-                dateiname: f.dateiname ?? "",
-                url: f.url,
+              fotos: bericht.fotos.map((foto) => ({
+                storage_path: foto.storage_path,
+                dateiname: foto.dateiname ?? "",
+                url: foto.url,
               })),
+              updated_at: bericht.updated_at,
             }}
           />
         </div>
