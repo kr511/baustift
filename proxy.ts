@@ -27,9 +27,15 @@ export async function proxy(request: NextRequest) {
 
   // Do not run code between createServerClient and getUser() — a stale
   // session could otherwise slip through the refresh.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user = null;
+  try {
+    const result = await supabase.auth.getUser();
+    user = result.data.user;
+  } catch (err) {
+    // Supabase nicht erreichbar o. Ä.: nicht die gesamte App mit 500 quittieren,
+    // sondern wie bei fehlender Session behandeln und auf /login leiten.
+    console.error("proxy: auth.getUser() fehlgeschlagen:", err);
+  }
 
   if (!user) {
     const loginUrl = new URL("/login", request.url);

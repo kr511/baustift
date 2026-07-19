@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { BAUSTIFT_MARK_DATA_URI } from "@/lib/baustift-mark-svg";
 
 export const size = { width: 180, height: 180 };
 export const contentType = "image/png";
@@ -13,14 +14,11 @@ export default function AppleIcon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#18181b",
-          color: "white",
-          fontSize: 76,
-          fontWeight: 700,
-          fontFamily: "sans-serif",
+          background: "#201e1b",
         }}
       >
-        B
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={BAUSTIFT_MARK_DATA_URI} width={134} height={134} alt="" />
       </div>
     ),
     { ...size },

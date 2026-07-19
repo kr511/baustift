@@ -6,9 +6,6 @@ import { getKiKontextDokumente } from "@/lib/data/kiKontextDokumente";
 import { getAktiveStilVorlagen } from "@/lib/data/stilVorlagen";
 import { generateBautagesbericht } from "@/lib/anthropic/generateBericht";
 
-const COOLDOWN_SEKUNDEN = 30;
-const TAGESLIMIT_GESAMT = 100;
-
 export async function POST(
   _request: Request,
   context: { params: Promise<{ id: string }> },
@@ -19,7 +16,7 @@ export async function POST(
   const { data: bericht, error: berichtError } = await supabase
     .from("tagesberichte")
     .select(
-      "id, baustelle_id, datum, wetter, stichpunkte, ki_generiert_am, baustellen(name)",
+      "id, baustelle_id, datum, wetter, stichpunkte, status, baustellen(name)",
     )
     .eq("id", id)
     .single();
@@ -31,40 +28,60 @@ export async function POST(
     );
   }
 
-  if (bericht.ki_generiert_am) {
-    const sekundenSeitLetzterGenerierung =
-      (Date.now() - new Date(bericht.ki_generiert_am).getTime()) / 1000;
-    if (sekundenSeitLetzterGenerierung < COOLDOWN_SEKUNDEN) {
+  if (bericht.status === "final") {
+    return NextResponse.json(
+      {
+        error:
+          "Der Bericht ist finalisiert und kann nicht mehr neu generiert werden.",
+      },
+      { status: 409 },
+    );
+  }
+
+  // Reservierung, Cooldown und Tageslimit passieren in einer DB-Funktion.
+  // Damit können parallele Tabs keine doppelte Anthropic-Anfrage auslösen.
+  const { data: reservierungen, error: reservierungsError } = await supabase.rpc(
+    "reserviere_ki_generierung",
+    { p_tagesbericht_id: id },
+  );
+  const reservierung = reservierungen?.[0];
+
+  if (reservierungsError || !reservierung) {
+    console.error("KI-Generierung konnte nicht reserviert werden:", reservierungsError);
+    return NextResponse.json(
+      { error: "KI-Generierung konnte nicht vorbereitet werden. Bitte erneut versuchen." },
+      { status: 500 },
+    );
+  }
+
+  if (!reservierung.erlaubt) {
+    if (reservierung.grund === "final") {
+      return NextResponse.json(
+        { error: "Der Bericht ist finalisiert und kann nicht mehr neu generiert werden." },
+        { status: 409 },
+      );
+    }
+    if (reservierung.grund === "tageslimit") {
+      return NextResponse.json(
+        { error: "Das Tageslimit von 100 KI-Generierungen ist erreicht. Bitte morgen erneut versuchen." },
+        { status: 429 },
+      );
+    }
+    if (reservierung.grund === "cooldown") {
       return NextResponse.json(
         {
-          error: `Bitte kurz warten – die letzte Generierung ist erst wenige Sekunden her (max. eine alle ${COOLDOWN_SEKUNDEN} Sekunden).`,
+          error: `Bitte kurz warten – die letzte Generierung ist erst wenige Sekunden her (noch ${reservierung.verbleibende_sekunden ?? 1} Sekunden).`,
         },
         { status: 429 },
       );
     }
+    return NextResponse.json(
+      { error: "Tagesbericht wurde nicht gefunden." },
+      { status: 404 },
+    );
   }
 
   const firma = await getUserFirma();
-
-  const heuteStart = new Date();
-  heuteStart.setHours(0, 0, 0, 0);
-  let tageslimitQuery = supabase
-    .from("tagesberichte")
-    .select("id", { count: "exact", head: true })
-    .gte("ki_generiert_am", heuteStart.toISOString());
-  if (firma) {
-    tageslimitQuery = tageslimitQuery.eq("firma_id", firma.id);
-  }
-  const { count: generierungenHeute } = await tageslimitQuery;
-
-  if ((generierungenHeute ?? 0) >= TAGESLIMIT_GESAMT) {
-    return NextResponse.json(
-      {
-        error: `Das Tageslimit von ${TAGESLIMIT_GESAMT} KI-Generierungen ist erreicht. Bitte morgen erneut versuchen.`,
-      },
-      { status: 429 },
-    );
-  }
 
   const [{ data: personal }, { data: material }, kiKontext, stilVorlagen] =
     await Promise.all([
@@ -93,13 +110,28 @@ export async function POST(
       stilVorlagen,
     });
 
-    await supabase
+    const { data: gespeichert, error: speichernError } = await supabase
       .from("tagesberichte")
       .update({
         bericht_text: berichtText,
-        ki_generiert_am: new Date().toISOString(),
       })
-      .eq("id", id);
+      .eq("id", id)
+      .eq("status", "entwurf")
+      .select("id")
+      .maybeSingle();
+
+    if (speichernError || !gespeichert) {
+      if (speichernError) {
+        console.error("KI-Text konnte nicht gespeichert werden:", speichernError);
+      }
+      return NextResponse.json(
+        {
+          error:
+            "Der generierte Text konnte nicht gespeichert werden, weil der Bericht inzwischen finalisiert wurde.",
+        },
+        { status: 409 },
+      );
+    }
 
     return NextResponse.json({
       berichtText,

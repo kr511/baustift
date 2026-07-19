@@ -19,13 +19,16 @@ export interface VorlageFormState {
   message?: string;
 }
 
-async function requireAdmin() {
-  const profil = await getUserProfil();
-  if (profil?.role !== "admin") {
-    throw new Error("Nur Administratoren können Stil-Vorlagen verwalten.");
-  }
-  return profil;
+export interface VorlageActionResult {
+  ok: boolean;
+  error?: string;
 }
+
+const vorlageAktivSchema = z.object({
+  id: z.string().uuid(),
+  aktiv: z.boolean(),
+});
+const vorlageIdSchema = z.string().uuid();
 
 export async function createStilVorlage(
   _prevState: VorlageFormState,
@@ -62,16 +65,51 @@ export async function createStilVorlage(
   return { message: "success" };
 }
 
-export async function setVorlageAktiv(id: string, aktiv: boolean) {
-  await requireAdmin();
+export async function setVorlageAktiv(
+  id: string,
+  aktiv: boolean,
+): Promise<VorlageActionResult> {
+  const validated = vorlageAktivSchema.safeParse({ id, aktiv });
+  if (!validated.success) return { ok: false, error: "Ungültige Vorlage." };
+
+  const profil = await getUserProfil();
+  if (profil?.role !== "admin") {
+    return { ok: false, error: "Nur Administratoren können Stil-Vorlagen verwalten." };
+  }
   const supabase = await createClient();
-  await supabase.from("stil_vorlagen").update({ aktiv }).eq("id", id);
+  const { data, error } = await supabase
+    .from("stil_vorlagen")
+    .update({ aktiv: validated.data.aktiv })
+    .eq("id", validated.data.id)
+    .select("id")
+    .maybeSingle();
+  if (error || !data) {
+    if (error) console.error("setVorlageAktiv fehlgeschlagen:", error);
+    return { ok: false, error: "Vorlagenstatus konnte nicht gespeichert werden." };
+  }
   revalidatePath("/admin/vorlagen");
+  return { ok: true };
 }
 
-export async function deleteStilVorlage(id: string) {
-  await requireAdmin();
+export async function deleteStilVorlage(id: string): Promise<VorlageActionResult> {
+  if (!vorlageIdSchema.safeParse(id).success) {
+    return { ok: false, error: "Ungültige Vorlage." };
+  }
+  const profil = await getUserProfil();
+  if (profil?.role !== "admin") {
+    return { ok: false, error: "Nur Administratoren können Stil-Vorlagen verwalten." };
+  }
   const supabase = await createClient();
-  await supabase.from("stil_vorlagen").delete().eq("id", id);
+  const { data, error } = await supabase
+    .from("stil_vorlagen")
+    .delete()
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
+  if (error || !data) {
+    if (error) console.error("deleteStilVorlage fehlgeschlagen:", error);
+    return { ok: false, error: "Vorlage konnte nicht gelöscht werden." };
+  }
   revalidatePath("/admin/vorlagen");
+  return { ok: true };
 }

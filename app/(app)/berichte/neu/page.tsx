@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { TagesberichtForm } from "@/components/berichte/TagesberichtForm";
+import { getUserFirma } from "@/lib/data/firma";
 
 export default async function NeuerTagesberichtPage({
   searchParams,
@@ -9,10 +10,10 @@ export default async function NeuerTagesberichtPage({
 }) {
   const { baustelle } = await searchParams;
   const supabase = await createClient();
-  const { data: baustellen } = await supabase
-    .from("baustellen")
-    .select("id, name")
-    .order("name");
+  const [{ data: baustellen }, firma] = await Promise.all([
+    supabase.from("baustellen").select("id, name").order("name"),
+    getUserFirma(),
+  ]);
 
   return (
     <div className="bg-blueprint min-h-full">
@@ -38,6 +39,7 @@ export default async function NeuerTagesberichtPage({
           <div className="card ticked mt-6 p-6">
             <TagesberichtForm
               baustellen={baustellen}
+              firmaId={firma?.id ?? ""}
               vorausgewaehlteBaustelleId={baustelle}
             />
           </div>

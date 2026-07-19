@@ -54,13 +54,17 @@ export function DokumentUpload({
         continue;
       }
 
-      await createDokument({
+      const result = await createDokument({
         baustelle_id: baustelleId,
         storage_path: path,
         dateiname: file.name,
         mime_type: file.type,
         groesse_bytes: file.size,
       });
+      if (result.message !== "success") {
+        setError(`"${file.name}" konnte nicht gespeichert werden: ${result.message ?? "Unbekannter Fehler"}`);
+        await supabase.storage.from("baustellen-dokumente").remove([path]);
+      }
     }
 
     setUploading(false);

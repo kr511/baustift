@@ -17,6 +17,17 @@ export interface DokumentFormState {
   message?: string;
 }
 
+export interface DokumentActionResult {
+  ok: boolean;
+  error?: string;
+  warning?: string;
+}
+
+const dokumentIdSchema = z.object({
+  baustelleId: z.string().uuid(),
+  dokumentId: z.string().uuid(),
+});
+
 export async function createDokument(
   input: z.infer<typeof createDokumentSchema>,
 ): Promise<DokumentFormState> {
@@ -46,36 +57,81 @@ export async function createDokument(
   return { message: "success" };
 }
 
-export async function deleteDokument(baustelleId: string, dokumentId: string) {
-  const supabase = await createClient();
-
-  const { data: dokument } = await supabase
-    .from("baustelle_dokumente")
-    .select("storage_path")
-    .eq("id", dokumentId)
-    .single();
-
-  if (dokument) {
-    await supabase.storage
-      .from("baustellen-dokumente")
-      .remove([dokument.storage_path]);
+export async function deleteDokument(
+  baustelleId: string,
+  dokumentId: string,
+): Promise<DokumentActionResult> {
+  const validated = dokumentIdSchema.safeParse({ baustelleId, dokumentId });
+  if (!validated.success) {
+    return { ok: false, error: "Ungültiges Dokument." };
   }
 
-  await supabase.from("baustelle_dokumente").delete().eq("id", dokumentId);
+  const supabase = await createClient();
 
-  revalidatePath(`/baustellen/${baustelleId}`);
+  const { data: dokument, error: lesenError } = await supabase
+    .from("baustelle_dokumente")
+    .select("storage_path")
+    .eq("id", validated.data.dokumentId)
+    .single();
+
+  if (lesenError || !dokument) {
+    if (lesenError) console.error("deleteDokument konnte Dokument nicht laden:", lesenError);
+    return { ok: false, error: "Dokument wurde nicht gefunden." };
+  }
+
+  // Zuerst die DB-Referenz entfernen: Schlägt das Storage-Löschen danach fehl,
+  // bleibt höchstens eine nicht mehr erreichbare Datei zurück, aber kein Eintrag
+  // mit kaputtem Download-Link.
+  const { data: geloescht, error: loeschError } = await supabase
+    .from("baustelle_dokumente")
+    .delete()
+    .eq("id", validated.data.dokumentId)
+    .select("id")
+    .maybeSingle();
+
+  if (loeschError || !geloescht) {
+    if (loeschError) console.error("deleteDokument fehlgeschlagen:", loeschError);
+    return { ok: false, error: "Dokument konnte nicht gelöscht werden." };
+  }
+
+  const { error: storageError } = await supabase.storage
+    .from("baustellen-dokumente")
+    .remove([dokument.storage_path]);
+
+  revalidatePath(`/baustellen/${validated.data.baustelleId}`);
+  if (storageError) {
+    console.error("deleteDokument: Datei konnte nicht entfernt werden:", storageError);
+    return {
+      ok: true,
+      warning: "Der Dokumenteintrag wurde gelöscht, die Datei konnte aber nicht vollständig entfernt werden.",
+    };
+  }
+  return { ok: true };
 }
 
 export async function setKiKontext(
   baustelleId: string,
   dokumentId: string,
   kiKontext: boolean,
-) {
+): Promise<DokumentActionResult> {
+  const validated = dokumentIdSchema.safeParse({ baustelleId, dokumentId });
+  if (!validated.success || typeof kiKontext !== "boolean") {
+    return { ok: false, error: "Ungültige Dokumentdaten." };
+  }
+
   const supabase = await createClient();
-  await supabase
+  const { data, error } = await supabase
     .from("baustelle_dokumente")
     .update({ ki_kontext: kiKontext })
-    .eq("id", dokumentId);
+    .eq("id", validated.data.dokumentId)
+    .select("id")
+    .maybeSingle();
 
-  revalidatePath(`/baustellen/${baustelleId}`);
+  if (error || !data) {
+    if (error) console.error("setKiKontext fehlgeschlagen:", error);
+    return { ok: false, error: "KI-Kontext konnte nicht gespeichert werden." };
+  }
+
+  revalidatePath(`/baustellen/${validated.data.baustelleId}`);
+  return { ok: true };
 }

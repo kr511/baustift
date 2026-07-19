@@ -67,6 +67,7 @@ function Sektion({
 export function TagesberichtForm({
   baustellen,
   action,
+  firmaId,
   vorausgewaehlteBaustelleId,
   initialData,
   submitLabel = "Tagesbericht speichern",
@@ -76,6 +77,7 @@ export function TagesberichtForm({
     state: TagesberichtFormState,
     formData: FormData,
   ) => Promise<TagesberichtFormState>;
+  firmaId: string;
   vorausgewaehlteBaustelleId?: string;
   initialData?: TagesberichtInitialData;
   submitLabel?: string;
@@ -145,10 +147,12 @@ export function TagesberichtForm({
 
       <Sektion nr="03" titel="Personal & Stunden">
         <PersonalListEditor initialRows={initialData?.personal} />
+        <FeldFehler messages={state.errors?.personal_json} />
       </Sektion>
 
       <Sektion nr="04" titel="Material & Geräte">
         <MaterialListEditor initialRows={initialData?.material} />
+        <FeldFehler messages={state.errors?.material_json} />
       </Sektion>
 
       <Sektion nr="05" titel="Stichpunkte zum Tag">
@@ -170,7 +174,8 @@ export function TagesberichtForm({
       </Sektion>
 
       <Sektion nr="06" titel="Fotos">
-        <FotoUpload initialFotos={initialData?.fotos} />
+        <FotoUpload firmaId={firmaId} initialFotos={initialData?.fotos} />
+        <FeldFehler messages={state.errors?.foto_json} />
       </Sektion>
 
       {state.message && (

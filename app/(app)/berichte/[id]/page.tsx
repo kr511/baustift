@@ -6,6 +6,7 @@ import { StatusBadge } from "@/components/berichte/StatusBadge";
 import { KiGenerateButton } from "@/components/berichte/KiGenerateButton";
 import { FinalisierenButton } from "@/components/berichte/FinalisierenButton";
 import { PdfDownloadButton } from "@/components/berichte/PdfDownloadButton";
+import { BerichtFinalisierungProvider } from "@/components/berichte/BerichtFinalisierungContext";
 
 export default async function TagesberichtDetailPage({
   params,
@@ -18,8 +19,9 @@ export default async function TagesberichtDetailPage({
   if (!bericht) notFound();
 
   return (
-    <div className="bg-blueprint min-h-full">
-      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+    <BerichtFinalisierungProvider>
+      <div className="bg-blueprint min-h-full">
+        <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
         <div className="flex flex-wrap items-start justify-between gap-4 border-b-2 border-ink pb-4">
           <div>
             <span className="label-tag">{formatDatum(bericht.datum)}</span>
@@ -36,9 +38,11 @@ export default async function TagesberichtDetailPage({
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Link href={`/berichte/${bericht.id}/bearbeiten`} className="btn-secondary">
-              Bearbeiten
-            </Link>
+            {bericht.status === "entwurf" && (
+              <Link href={`/berichte/${bericht.id}/bearbeiten`} className="btn-secondary">
+                Bearbeiten
+              </Link>
+            )}
             <Link href={`/berichte/${bericht.id}/druckansicht`} className="btn-secondary">
               Druckansicht
             </Link>
@@ -91,10 +95,22 @@ export default async function TagesberichtDetailPage({
 
         <div className="mt-6">
           <span className="label-tag mb-2 block">Bericht</span>
-          <KiGenerateButton
-            tagesberichtId={bericht.id}
-            initialBerichtText={bericht.bericht_text}
-          />
+          {bericht.status === "final" ? (
+            bericht.bericht_text ? (
+              <div className="card p-4 text-sm whitespace-pre-wrap">
+                {bericht.bericht_text}
+              </div>
+            ) : (
+              <p className="card border-dashed p-6 text-sm text-ink-soft">
+                Kein Berichtstext hinterlegt.
+              </p>
+            )
+          ) : (
+            <KiGenerateButton
+              tagesberichtId={bericht.id}
+              initialBerichtText={bericht.bericht_text}
+            />
+          )}
         </div>
 
         <div className="card mt-6 p-4">
@@ -103,7 +119,8 @@ export default async function TagesberichtDetailPage({
             {bericht.stichpunkte}
           </p>
         </div>
+        </div>
       </div>
-    </div>
+    </BerichtFinalisierungProvider>
   );
 }

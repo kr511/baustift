@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { deleteDokument, setKiKontext } from "@/lib/actions/dokumente";
 import type { BaustelleDokument } from "@/lib/data/dokumente";
@@ -20,6 +20,7 @@ export function DokumenteListe({
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [feedback, setFeedback] = useState<string | null>(null);
 
   if (dokumente.length === 0) {
     return (
@@ -30,8 +31,10 @@ export function DokumenteListe({
   }
 
   return (
-    <ul className="divide-line divide-y-[1.5px]">
-      {dokumente.map((dokument) => {
+    <div className="space-y-2">
+      {feedback && <p className="text-brick text-sm">{feedback}</p>}
+      <ul className="divide-line divide-y-[1.5px]">
+        {dokumente.map((dokument) => {
         const istPdf = dokument.mime_type === "application/pdf";
         return (
           <li
@@ -64,24 +67,36 @@ export function DokumenteListe({
                   type="checkbox"
                   disabled={!istPdf || isPending}
                   defaultChecked={dokument.ki_kontext}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const kiKontext = e.target.checked;
+                    setFeedback(null);
                     startTransition(async () => {
-                      await setKiKontext(baustelleId, dokument.id, e.target.checked);
+                      const result = await setKiKontext(baustelleId, dokument.id, kiKontext);
+                      if (!result.ok) {
+                        setFeedback(result.error ?? "KI-Kontext konnte nicht gespeichert werden.");
+                        return;
+                      }
                       router.refresh();
-                    })
-                  }
+                    });
+                  }}
                 />
                 Für KI-Kontext verwenden
               </label>
               <button
                 type="button"
                 disabled={isPending}
-                onClick={() =>
+                onClick={() => {
+                  setFeedback(null);
                   startTransition(async () => {
-                    await deleteDokument(baustelleId, dokument.id);
+                    const result = await deleteDokument(baustelleId, dokument.id);
+                    if (!result.ok) {
+                      setFeedback(result.error ?? "Dokument konnte nicht gelöscht werden.");
+                      return;
+                    }
+                    if (result.warning) setFeedback(result.warning);
                     router.refresh();
-                  })
-                }
+                  });
+                }}
                 className="text-brick text-xs underline underline-offset-2"
               >
                 Löschen
@@ -89,7 +104,8 @@ export function DokumenteListe({
             </div>
           </li>
         );
-      })}
-    </ul>
+        })}
+      </ul>
+    </div>
   );
 }

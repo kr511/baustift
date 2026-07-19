@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CONTACT_EMAIL } from "@/lib/config";
+import { BaustiftMark } from "@/components/layout/BaustiftMark";
 
 export const metadata: Metadata = {
   title: "Baustift | Bautagesberichte aus Stichpunkten",
@@ -18,12 +19,15 @@ export default function MarketingLayout({
       <div className="hazard-rule" />
       <header className="bg-graphite border-b border-ink">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
-          <Link href="/" className="flex items-baseline gap-3">
-            <span className="font-display text-2xl leading-none font-bold tracking-tight text-white">
-              BAUSTIFT
-            </span>
-            <span className="label-tag text-amber hidden sm:inline">
-              Bautagesberichte
+          <Link href="/" className="flex items-center gap-3">
+            <BaustiftMark className="h-8 w-8 shrink-0" />
+            <span className="flex items-baseline gap-3">
+              <span className="font-display text-2xl leading-none font-bold tracking-tight text-white">
+                BAUSTIFT
+              </span>
+              <span className="label-tag text-amber hidden sm:inline">
+                Bautagesberichte
+              </span>
             </span>
           </Link>
           <nav className="flex items-center gap-1 text-sm">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useTransition } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import {
@@ -38,6 +38,7 @@ export function StilVorlagenEditor({
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [feedback, setFeedback] = useState<string | null>(null);
 
   useEffect(() => {
     if (state.message === "success") formRef.current?.reset();
@@ -96,6 +97,7 @@ export function StilVorlagenEditor({
           Aktive Vorlagen: {aktiveAnzahl} — die KI nutzt maximal die{" "}
           {STIL_VORLAGEN_MAX} neuesten aktiven Vorlagen als Stil-Referenz.
         </span>
+        {feedback && <p className="text-brick mb-2 text-sm">{feedback}</p>}
         <ul className="divide-line divide-y-[1.5px]">
           {vorlagen.map((vorlage) => (
             <li key={vorlage.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
@@ -111,24 +113,35 @@ export function StilVorlagenEditor({
                     type="checkbox"
                     disabled={isPending}
                     defaultChecked={vorlage.aktiv}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const aktiv = e.target.checked;
+                      setFeedback(null);
                       startTransition(async () => {
-                        await setVorlageAktiv(vorlage.id, e.target.checked);
+                        const result = await setVorlageAktiv(vorlage.id, aktiv);
+                        if (!result.ok) {
+                          setFeedback(result.error ?? "Vorlagenstatus konnte nicht gespeichert werden.");
+                          return;
+                        }
                         router.refresh();
-                      })
-                    }
+                      });
+                    }}
                   />
                   Aktiv
                 </label>
                 <button
                   type="button"
                   disabled={isPending}
-                  onClick={() =>
+                  onClick={() => {
+                    setFeedback(null);
                     startTransition(async () => {
-                      await deleteStilVorlage(vorlage.id);
+                      const result = await deleteStilVorlage(vorlage.id);
+                      if (!result.ok) {
+                        setFeedback(result.error ?? "Vorlage konnte nicht gelöscht werden.");
+                        return;
+                      }
                       router.refresh();
-                    })
-                  }
+                    });
+                  }}
                   className="text-brick text-xs underline underline-offset-2"
                 >
                   Löschen

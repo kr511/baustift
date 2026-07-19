@@ -7,6 +7,13 @@ export type BaustelleStatus = "aktiv" | "pausiert" | "abgeschlossen";
 export type TagesberichtStatus = "entwurf" | "final";
 export type MaterialTyp = "material" | "geraet";
 export type ProfilRolle = "admin" | "nutzer";
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
 
 export interface Database {
   public: {
@@ -342,8 +349,86 @@ export interface Database {
           },
         ];
       };
+      legacy_tagesbericht_foto_pfade: {
+        Row: {
+          storage_path: string;
+          firma_id: string;
+        };
+        Insert: {
+          storage_path: string;
+          firma_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["legacy_tagesbericht_foto_pfade"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "legacy_tagesbericht_foto_pfade_firma_id_fkey";
+            columns: ["firma_id"];
+            isOneToOne: false;
+            referencedRelation: "firmen";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ki_generierung_limits: {
+        Row: {
+          firma_id: string;
+          tag: string;
+          anzahl: number;
+        };
+        Insert: {
+          firma_id: string;
+          tag: string;
+          anzahl?: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["ki_generierung_limits"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "ki_generierung_limits_firma_id_fkey";
+            columns: ["firma_id"];
+            isOneToOne: false;
+            referencedRelation: "firmen";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      create_tagesbericht_mit_zeilen: {
+        Args: {
+          p_baustelle_id: string;
+          p_datum: string;
+          p_wetter: string;
+          p_stichpunkte: string;
+          p_created_by: string | null;
+          p_created_by_user_id: string | null;
+          p_personal: Json;
+          p_material: Json;
+          p_fotos: Json;
+        };
+        Returns: string;
+      };
+      update_tagesbericht_mit_zeilen: {
+        Args: {
+          p_tagesbericht_id: string;
+          p_baustelle_id: string;
+          p_datum: string;
+          p_wetter: string;
+          p_stichpunkte: string;
+          p_personal: Json;
+          p_material: Json;
+          p_fotos: Json;
+        };
+        Returns: boolean;
+      };
+      reserviere_ki_generierung: {
+        Args: { p_tagesbericht_id: string };
+        Returns: {
+          erlaubt: boolean;
+          grund: string;
+          verbleibende_sekunden: number | null;
+        }[];
+      };
+    };
   };
 }

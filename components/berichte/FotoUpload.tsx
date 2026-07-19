@@ -19,8 +19,10 @@ interface HochgeladenesFoto {
 }
 
 export function FotoUpload({
+  firmaId,
   initialFotos,
 }: {
+  firmaId: string;
   initialFotos?: { storage_path: string; dateiname: string; url: string }[];
 }) {
   const [fotos, setFotos] = useState<HochgeladenesFoto[]>(
@@ -36,6 +38,10 @@ export function FotoUpload({
 
   async function handleFiles(fileList: FileList | null) {
     if (!fileList || fileList.length === 0) return;
+    if (!firmaId) {
+      setError("Ihre Firma konnte nicht geladen werden. Fotos können nicht hochgeladen werden.");
+      return;
+    }
     setUploading(true);
     setError(null);
 
@@ -53,7 +59,7 @@ export function FotoUpload({
       }
 
       const sichererName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-      const path = `entwuerfe/${crypto.randomUUID()}-${sichererName}`;
+      const path = `${firmaId}/entwuerfe/${crypto.randomUUID()}-${sichererName}`;
       const { error: uploadError } = await supabase.storage
         .from("tagesbericht-fotos")
         .upload(path, file);

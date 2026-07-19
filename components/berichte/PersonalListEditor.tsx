@@ -45,6 +45,7 @@ export function PersonalListEditor({
               type="number"
               step="0.25"
               min="0"
+              max="24"
               placeholder="Std."
               value={zeile.stunden}
               onChange={(e) => updateZeile(index, { stunden: e.target.value })}

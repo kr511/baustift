@@ -17,6 +17,16 @@ export interface BaustelleFormState {
   message?: string;
 }
 
+export interface BaustelleStatusResult {
+  ok: boolean;
+  error?: string;
+}
+
+const baustelleStatusSchema = z.object({
+  baustelleId: z.string().uuid(),
+  status: z.enum(["aktiv", "pausiert", "abgeschlossen"]),
+});
+
 export async function createBaustelle(
   _prevState: BaustelleFormState,
   formData: FormData,
@@ -57,13 +67,26 @@ export async function createBaustelle(
 export async function setBaustelleStatus(
   baustelleId: string,
   status: "aktiv" | "pausiert" | "abgeschlossen",
-) {
+): Promise<BaustelleStatusResult> {
+  const validated = baustelleStatusSchema.safeParse({ baustelleId, status });
+  if (!validated.success) {
+    return { ok: false, error: "Ungültiger Baustellenstatus." };
+  }
+
   const supabase = await createClient();
-  await supabase
+  const { data, error } = await supabase
     .from("baustellen")
-    .update({ status })
-    .eq("id", baustelleId);
+    .update({ status: validated.data.status })
+    .eq("id", validated.data.baustelleId)
+    .select("id")
+    .maybeSingle();
+
+  if (error || !data) {
+    if (error) console.error("setBaustelleStatus fehlgeschlagen:", error);
+    return { ok: false, error: "Baustellenstatus konnte nicht gespeichert werden." };
+  }
 
   revalidatePath("/baustellen");
   revalidatePath("/berichte");
+  return { ok: true };
 }

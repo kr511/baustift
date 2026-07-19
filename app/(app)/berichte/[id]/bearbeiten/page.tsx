@@ -1,8 +1,9 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getTagesberichtVollstaendig } from "@/lib/data/tagesberichte";
 import { updateTagesbericht } from "@/lib/actions/tagesberichte";
 import { TagesberichtForm } from "@/components/berichte/TagesberichtForm";
+import { getUserFirma } from "@/lib/data/firma";
 
 export default async function TagesberichtBearbeitenPage({
   params,
@@ -13,11 +14,14 @@ export default async function TagesberichtBearbeitenPage({
   const bericht = await getTagesberichtVollstaendig(id);
   if (!bericht) notFound();
 
+  // Finalisierte Berichte sind abgeschlossen und nicht mehr editierbar.
+  if (bericht.status === "final") redirect(`/berichte/${id}`);
+
   const supabase = await createClient();
-  const { data: baustellen } = await supabase
-    .from("baustellen")
-    .select("id, name")
-    .order("name");
+  const [{ data: baustellen }, firma] = await Promise.all([
+    supabase.from("baustellen").select("id, name").order("name"),
+    getUserFirma(),
+  ]);
 
   return (
     <div className="bg-blueprint min-h-full">
@@ -30,6 +34,7 @@ export default async function TagesberichtBearbeitenPage({
         <div className="card ticked mt-6 p-6">
           <TagesberichtForm
             baustellen={baustellen ?? []}
+            firmaId={firma?.id ?? ""}
             action={updateTagesbericht.bind(null, bericht.id)}
             submitLabel="Änderungen speichern"
             initialData={{

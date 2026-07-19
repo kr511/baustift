@@ -2,8 +2,15 @@ const { app, BrowserWindow, Menu, shell, dialog } = require("electron");
 const path = require("path");
 const { autoUpdater } = require("electron-updater");
 
-// Overridable for local testing: APP_URL=http://localhost:3000 npm start
-const APP_URL = process.env.APP_URL || "https://swietelsky-faber-tagesbericht.vercel.app";
+// Overridable for local testing: APP_URL=http://localhost:3000/berichte npm start
+//
+// Points at /berichte (not the bare domain) so the desktop window opens
+// straight into the app instead of the public marketing landing page.
+// proxy.ts redirects unauthenticated requests to /login automatically, so
+// logged-out users still land in the right place.
+const APP_URL =
+  process.env.APP_URL ||
+  "https://swietelsky-faber-tagesbericht.vercel.app/berichte";
 const APP_ORIGIN = new URL(APP_URL).origin;
 
 // electron-builder setzt diese Env-Var zur Laufzeit der portablen Version.
