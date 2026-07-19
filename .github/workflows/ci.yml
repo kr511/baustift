@@ -1,6 +1,8 @@
 name: CI
 
 on:
+  push:
+    branches: ["agent/release-1.1-core"]
   pull_request:
   workflow_dispatch:
 
