@@ -2,7 +2,6 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUserProfil } from "@/lib/data/profile";
 
@@ -40,6 +39,8 @@ export interface TagesberichtFormState {
     Record<keyof z.infer<typeof tagesberichtSchema>, string[]>
   >;
   message?: string;
+  success?: boolean;
+  redirectTo?: string;
 }
 
 type ParsedJsonArray<T> =
@@ -158,7 +159,7 @@ export async function createTagesbericht(
   }
 
   revalidatePath("/berichte");
-  redirect(`/berichte/${berichtId}`);
+  return { success: true, redirectTo: `/berichte/${berichtId}` };
 }
 
 export async function updateTagesbericht(
@@ -218,7 +219,8 @@ export async function updateTagesbericht(
   }
 
   revalidatePath("/berichte");
-  redirect(`/berichte/${id}`);
+  revalidatePath(`/berichte/${id}`);
+  return { success: true, redirectTo: `/berichte/${id}` };
 }
 
 export interface BerichtTextSpeichernResult {

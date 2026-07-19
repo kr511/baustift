@@ -8,6 +8,7 @@ export interface TagesberichtVollstaendig {
   bericht_text: string | null;
   status: "entwurf" | "final";
   created_by: string | null;
+  updated_at: string;
   baustelle: { id: string; name: string } | null;
   personal: { name: string; stunden: number; taetigkeit: string | null }[];
   material: { bezeichnung: string; menge: string | null; typ: "material" | "geraet" }[];
@@ -22,7 +23,7 @@ export async function getTagesberichtVollstaendig(
   const { data: bericht } = await supabase
     .from("tagesberichte")
     .select(
-      "id, datum, wetter, stichpunkte, bericht_text, status, created_by, baustellen(id, name)",
+      "id, datum, wetter, stichpunkte, bericht_text, status, created_by, updated_at, baustellen(id, name)",
     )
     .eq("id", id)
     .single();
@@ -65,6 +66,7 @@ export async function getTagesberichtVollstaendig(
     bericht_text: bericht.bericht_text,
     status: bericht.status,
     created_by: bericht.created_by,
+    updated_at: bericht.updated_at,
     baustelle: bericht.baustellen,
     personal: personal ?? [],
     material: material ?? [],
