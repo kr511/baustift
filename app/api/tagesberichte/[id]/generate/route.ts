@@ -6,6 +6,19 @@ import { getKiKontextDokumente } from "@/lib/data/kiKontextDokumente";
 import { getAktiveStilVorlagen } from "@/lib/data/stilVorlagen";
 import { generateBautagesbericht } from "@/lib/anthropic/generateBericht";
 
+interface UntypedRpcClient {
+  rpc(
+    name: string,
+    args: Record<string, unknown>,
+  ): Promise<{ data: unknown; error: { message: string } | null }>;
+}
+
+interface WorkflowRpcRow {
+  ok: boolean;
+  neuer_status?: string | null;
+  fehler?: string | null;
+}
+
 export async function POST(
   _request: Request,
   context: { params: Promise<{ id: string }> },
@@ -38,8 +51,6 @@ export async function POST(
     );
   }
 
-  // Reservierung, Cooldown und Tageslimit passieren in einer DB-Funktion.
-  // Damit können parallele Tabs keine doppelte Anthropic-Anfrage auslösen.
   const { data: reservierungen, error: reservierungsError } = await supabase.rpc(
     "reserviere_ki_generierung",
     { p_tagesbericht_id: id },
@@ -110,17 +121,19 @@ export async function POST(
       stilVorlagen,
     });
 
-    const { data: gespeichert, error: speichernError } = await supabase
-      .from("tagesberichte")
-      .update({
-        bericht_text: berichtText,
-      })
-      .eq("id", id)
-      .eq("status", "entwurf")
-      .select("id")
-      .maybeSingle();
+    const untyped = supabase as unknown as UntypedRpcClient;
+    const { data: speichernData, error: speichernError } = await untyped.rpc(
+      "speichere_ki_bericht_text",
+      {
+        p_tagesbericht_id: id,
+        p_bericht_text: berichtText,
+      },
+    );
+    const speichernResult = Array.isArray(speichernData)
+      ? (speichernData[0] as WorkflowRpcRow | undefined)
+      : undefined;
 
-    if (speichernError || !gespeichert) {
+    if (speichernError || !speichernResult?.ok) {
       if (speichernError) {
         console.error("KI-Text konnte nicht gespeichert werden:", speichernError);
       }
@@ -135,6 +148,7 @@ export async function POST(
 
     return NextResponse.json({
       berichtText,
+      status: speichernResult.neuer_status ?? "generiert",
       ausgelasseneDokumente: kiKontext.ausgelassen,
     });
   } catch (err) {
