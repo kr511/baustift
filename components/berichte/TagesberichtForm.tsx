@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import {
@@ -121,6 +122,7 @@ export function TagesberichtForm({
   initialData?: TagesberichtInitialData;
   submitLabel?: string;
 }) {
+  const router = useRouter();
   const [state, formAction] = useActionState(
     action ?? createTagesbericht,
     initialState,
@@ -197,6 +199,7 @@ export function TagesberichtForm({
 
     const warnen = (event: BeforeUnloadEvent) => {
       event.preventDefault();
+      event.returnValue = true;
     };
     window.addEventListener("beforeunload", warnen);
     return () => window.removeEventListener("beforeunload", warnen);
@@ -207,6 +210,20 @@ export function TagesberichtForm({
       setGeaendert(true);
     }
   }, [state]);
+
+  useEffect(() => {
+    if (!state.success || !state.redirectTo) return;
+
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    try {
+      window.localStorage.removeItem(entwurfKey);
+    } catch {
+      // Die erfolgreiche Server-Speicherung bleibt maßgeblich.
+    }
+    setGeaendert(false);
+    router.push(state.redirectTo);
+    router.refresh();
+  }, [entwurfKey, router, state.redirectTo, state.success]);
 
   function aktualisiere<K extends keyof TagesberichtEntwurfInhalt>(
     feld: K,
@@ -235,16 +252,6 @@ export function TagesberichtForm({
     setSpeicherStatus("bereit");
   }
 
-  function vorServerSpeicherung() {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    try {
-      window.localStorage.removeItem(entwurfKey);
-    } catch {
-      // Der Server-Submit soll nicht am lokalen Speicher scheitern.
-    }
-    setGeaendert(false);
-  }
-
   const speicherText =
     speicherStatus === "speichert"
       ? "Wird lokal gespeichert …"
@@ -258,7 +265,7 @@ export function TagesberichtForm({
           : "Lokale Sicherung wird bei der ersten Änderung aktiviert.";
 
   return (
-    <form action={formAction} onSubmit={vorServerSpeicherung} className="space-y-5">
+    <form action={formAction} className="space-y-5">
       {wiederherstellbarerEntwurf && (
         <div className="border-amber bg-paper-raised border-[1.5px] p-4" role="status">
           <p className="font-semibold text-ink">Nicht gespeicherter Entwurf gefunden</p>
