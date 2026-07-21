@@ -1,6 +1,21 @@
 import { formatDatum } from "@/lib/format";
 import type { TagesberichtVollstaendig } from "@/lib/data/tagesberichte";
 
+function statusLabel(status: TagesberichtVollstaendig["status"]) {
+  if (status === "final") return "Finalisiert";
+  if (status === "geprueft") return "Geprüft";
+  if (status === "generiert") return "Text erstellt";
+  return "Entwurf";
+}
+
+function formatZeitpunkt(value: string) {
+  return new Intl.DateTimeFormat("de-DE", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Europe/Berlin",
+  }).format(new Date(value));
+}
+
 export function TagesberichtDruckansicht({
   bericht,
   firmaWordmark,
@@ -8,6 +23,9 @@ export function TagesberichtDruckansicht({
   bericht: TagesberichtVollstaendig;
   firmaWordmark: string | null;
 }) {
+  const version = bericht.angezeigte_version ??
+    (bericht.status === "final" ? bericht.aktuelle_version : 0);
+
   return (
     <article className="mx-auto max-w-3xl bg-white p-10 text-ink print:p-0">
       <div className="hazard-rule mb-6 print:mb-4" />
@@ -19,12 +37,21 @@ export function TagesberichtDruckansicht({
           </p>
           <p className="label-tag mt-1">Bautagesbericht</p>
         </div>
-        <p className="font-mono text-sm">{formatDatum(bericht.datum)}</p>
+        <div className="text-right">
+          <p className="font-mono text-sm">{formatDatum(bericht.datum)}</p>
+          {version > 0 && <p className="label-tag mt-1">Version {version}</p>}
+        </div>
       </header>
 
       <h1 className="font-display mt-4 text-3xl leading-none font-bold tracking-tight">
         {bericht.baustelle?.name ?? "Unbekannte Baustelle"}
       </h1>
+
+      {bericht.versionsgrund && (
+        <div className="border-amber bg-paper-raised mt-4 border-[1.5px] p-3 text-sm">
+          <span className="font-semibold">Versionsgrund:</span> {bericht.versionsgrund}
+        </div>
+      )}
 
       <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-3 border-y border-line py-4 text-sm sm:grid-cols-3">
         <div>
@@ -33,12 +60,24 @@ export function TagesberichtDruckansicht({
         </div>
         <div>
           <dt className="label-tag">Status</dt>
-          <dd className="mt-0.5">{bericht.status === "final" ? "Final" : "Entwurf"}</dd>
+          <dd className="mt-0.5">{statusLabel(bericht.status)}</dd>
         </div>
         {bericht.created_by && (
           <div>
             <dt className="label-tag">Erstellt von</dt>
             <dd className="mt-0.5">{bericht.created_by}</dd>
+          </div>
+        )}
+        {bericht.finalisiert_am && (
+          <div>
+            <dt className="label-tag">Finalisiert am</dt>
+            <dd className="mt-0.5">{formatZeitpunkt(bericht.finalisiert_am)}</dd>
+          </div>
+        )}
+        {bericht.finalisiert_von && (
+          <div>
+            <dt className="label-tag">Finalisiert durch</dt>
+            <dd className="mt-0.5">{bericht.finalisiert_von}</dd>
           </div>
         )}
       </dl>
@@ -55,11 +94,11 @@ export function TagesberichtDruckansicht({
               </tr>
             </thead>
             <tbody>
-              {bericht.personal.map((p, i) => (
-                <tr key={i} className="border-b border-line">
-                  <td className="py-1.5">{p.name}</td>
-                  <td className="py-1.5 font-mono">{p.stunden}</td>
-                  <td className="py-1.5">{p.taetigkeit ?? "–"}</td>
+              {bericht.personal.map((person, index) => (
+                <tr key={index} className="border-b border-line">
+                  <td className="py-1.5">{person.name}</td>
+                  <td className="py-1.5 font-mono">{person.stunden}</td>
+                  <td className="py-1.5">{person.taetigkeit ?? "–"}</td>
                 </tr>
               ))}
             </tbody>
@@ -79,11 +118,13 @@ export function TagesberichtDruckansicht({
               </tr>
             </thead>
             <tbody>
-              {bericht.material.map((m, i) => (
-                <tr key={i} className="border-b border-line">
-                  <td className="py-1.5">{m.typ === "geraet" ? "Gerät" : "Material"}</td>
-                  <td className="py-1.5">{m.bezeichnung}</td>
-                  <td className="py-1.5 font-mono">{m.menge ?? "–"}</td>
+              {bericht.material.map((eintrag, index) => (
+                <tr key={index} className="border-b border-line">
+                  <td className="py-1.5">
+                    {eintrag.typ === "geraet" ? "Gerät" : "Material"}
+                  </td>
+                  <td className="py-1.5">{eintrag.bezeichnung}</td>
+                  <td className="py-1.5 font-mono">{eintrag.menge ?? "–"}</td>
                 </tr>
               ))}
             </tbody>
