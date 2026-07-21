@@ -18,10 +18,12 @@ export const getUserFirma = cache(async (): Promise<UserFirma | null> => {
 
   const {
     data: { user },
+    error: userError,
   } = await supabase.auth.getUser();
+  if (userError) console.error("getUserFirma: auth.getUser fehlgeschlagen:", userError);
   if (!user) return null;
 
-  const { data: profile } = await supabase
+  const { data: profile, error } = await supabase
     .from("profiles")
     .select(
       "firmen(id, name, wordmark, land), niederlassungen(id, name)",
@@ -29,6 +31,7 @@ export const getUserFirma = cache(async (): Promise<UserFirma | null> => {
     .eq("id", user.id)
     .single();
 
+  if (error) console.error("getUserFirma fehlgeschlagen:", error);
   if (!profile?.firmen) return null;
 
   return {

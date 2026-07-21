@@ -16,12 +16,13 @@ export async function getBaustelleDokumente(
 ): Promise<BaustelleDokument[]> {
   const supabase = await createClient();
 
-  const { data: dokumente } = await supabase
+  const { data: dokumente, error } = await supabase
     .from("baustelle_dokumente")
     .select("id, storage_path, dateiname, mime_type, groesse_bytes, ki_kontext, created_at")
     .eq("baustelle_id", baustelleId)
     .order("created_at", { ascending: false });
 
+  if (error) console.error("getBaustelleDokumente fehlgeschlagen:", error);
   if (!dokumente) return [];
 
   return Promise.all(

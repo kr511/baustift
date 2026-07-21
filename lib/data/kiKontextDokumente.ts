@@ -18,7 +18,7 @@ export async function getKiKontextDokumente(
 ): Promise<KiKontextErgebnis> {
   const supabase = await createClient();
 
-  const { data: dokumente } = await supabase
+  const { data: dokumente, error } = await supabase
     .from("baustelle_dokumente")
     .select("storage_path, dateiname, mime_type, groesse_bytes")
     .eq("baustelle_id", baustelleId)
@@ -26,6 +26,7 @@ export async function getKiKontextDokumente(
     .eq("mime_type", "application/pdf")
     .order("created_at", { ascending: true });
 
+  if (error) console.error("getKiKontextDokumente fehlgeschlagen:", error);
   if (!dokumente || dokumente.length === 0) {
     return { dokumente: [], ausgelassen: [] };
   }
@@ -52,7 +53,15 @@ export async function getKiKontextDokumente(
       const { data, error } = await supabase.storage
         .from("baustellen-dokumente")
         .download(dokument.storage_path);
-      if (error || !data) return null;
+      if (error || !data) {
+        console.error(
+          "getKiKontextDokumente: Download fehlgeschlagen:",
+          dokument.storage_path,
+          error,
+        );
+        ausgelassen.push(dokument.dateiname);
+        return null;
+      }
       const arrayBuffer = await data.arrayBuffer();
       return {
         dateiname: dokument.dateiname,

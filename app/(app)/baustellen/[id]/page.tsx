@@ -14,16 +14,24 @@ export default async function BaustelleDetailPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: baustelle }, dokumente, profil] = await Promise.all([
-    supabase
-      .from("baustellen")
-      .select("id, name, adresse, auftraggeber, status, notiz")
-      .eq("id", id)
-      .single(),
-    getBaustelleDokumente(id),
-    getUserProfil(),
-  ]);
+  const [{ data: baustelle, error: baustelleError }, dokumente, profil] =
+    await Promise.all([
+      supabase
+        .from("baustellen")
+        .select("id, name, adresse, auftraggeber, status, notiz")
+        .eq("id", id)
+        .single(),
+      getBaustelleDokumente(id),
+      getUserProfil(),
+    ]);
 
+  // PGRST116 = "keine Zeile gefunden" (falsche ID/fremde Firma via RLS) —
+  // das ist ein normales 404. Jeder andere Fehler ist ein echter
+  // DB-/Netzwerkfehler und soll nicht als stilles 404 verschwinden.
+  if (baustelleError && baustelleError.code !== "PGRST116") {
+    console.error("BaustelleDetailPage: Baustelle konnte nicht geladen werden:", baustelleError);
+    throw new Error("Baustelle konnte nicht geladen werden.");
+  }
   if (!baustelle) notFound();
 
   return (

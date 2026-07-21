@@ -17,15 +17,18 @@ export const getUserProfil = cache(async (): Promise<UserProfil | null> => {
 
   const {
     data: { user },
+    error: userError,
   } = await supabase.auth.getUser();
+  if (userError) console.error("getUserProfil: auth.getUser fehlgeschlagen:", userError);
   if (!user) return null;
 
-  const { data: profil } = await supabase
+  const { data: profil, error } = await supabase
     .from("profiles")
     .select("id, display_name, role, firma_id, niederlassung_id")
     .eq("id", user.id)
     .single();
 
+  if (error) console.error("getUserProfil fehlgeschlagen:", error);
   if (!profil) return null;
 
   return {
