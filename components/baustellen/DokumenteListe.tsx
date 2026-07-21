@@ -97,7 +97,7 @@ export function DokumenteListe({
                     router.refresh();
                   });
                 }}
-                className="text-brick text-xs underline underline-offset-2"
+                className="text-brick focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber inline-flex min-h-11 items-center px-2 text-xs underline underline-offset-2"
               >
                 Löschen
               </button>
