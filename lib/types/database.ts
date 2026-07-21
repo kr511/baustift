@@ -4,7 +4,11 @@
 // schema change.
 
 export type BaustelleStatus = "aktiv" | "pausiert" | "abgeschlossen";
-export type TagesberichtStatus = "entwurf" | "final";
+export type TagesberichtStatus =
+  | "entwurf"
+  | "generiert"
+  | "geprueft"
+  | "final";
 export type MaterialTyp = "material" | "geraet";
 export type ProfilRolle = "admin" | "nutzer";
 export type Json =
@@ -158,6 +162,10 @@ export interface Database {
           created_at: string;
           updated_at: string;
           firma_id: string;
+          finalisiert_am: string | null;
+          finalisiert_von_user_id: string | null;
+          aktuelle_version: number;
+          offener_korrekturgrund: string | null;
         };
         Insert: {
           id?: string;
@@ -174,6 +182,10 @@ export interface Database {
           updated_at?: string;
           // Wird per DB-Trigger aus der Baustelle kopiert.
           firma_id?: string;
+          finalisiert_am?: string | null;
+          finalisiert_von_user_id?: string | null;
+          aktuelle_version?: number;
+          offener_korrekturgrund?: string | null;
         };
         Update: Partial<
           Database["public"]["Tables"]["tagesberichte"]["Insert"]
