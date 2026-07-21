@@ -23,14 +23,30 @@ export async function getBaustelleDokumente(
     .order("created_at", { ascending: false });
 
   if (error) console.error("getBaustelleDokumente fehlgeschlagen:", error);
-  if (!dokumente) return [];
+  if (!dokumente || dokumente.length === 0) return [];
 
-  return Promise.all(
-    dokumente.map(async (dokument) => {
-      const { data: signed } = await supabase.storage
-        .from("baustellen-dokumente")
-        .createSignedUrl(dokument.storage_path, 60 * 60);
-      return { ...dokument, url: signed?.signedUrl ?? "" };
-    }),
+  const { data: signed, error: signError } = await supabase.storage
+    .from("baustellen-dokumente")
+    .createSignedUrls(
+      dokumente.map((dokument) => dokument.storage_path),
+      60 * 60,
+    );
+
+  if (signError) console.error("getBaustelleDokumente: Signed URLs fehlgeschlagen:", signError);
+
+  const urlByPath = new Map(
+    (signed ?? []).map((eintrag) => [eintrag.path, eintrag]),
   );
+
+  return dokumente.map((dokument) => {
+    const eintrag = urlByPath.get(dokument.storage_path);
+    if (eintrag?.error) {
+      console.error(
+        "getBaustelleDokumente: Signed URL fehlgeschlagen:",
+        dokument.storage_path,
+        eintrag.error,
+      );
+    }
+    return { ...dokument, url: eintrag?.signedUrl ?? "" };
+  });
 }
