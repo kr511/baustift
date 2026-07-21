@@ -29,6 +29,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Secret scan
+        run: npm run security:secrets 2>&1 | tee secret-scan.log
+
       - name: Lint
         run: npm run lint 2>&1 | tee lint.log
 
@@ -44,6 +47,7 @@ jobs:
         with:
           name: ci-logs-${{ github.run_id }}
           path: |
+            secret-scan.log
             lint.log
             tests.log
             build.log

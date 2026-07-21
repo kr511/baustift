@@ -1,0 +1,17 @@
+#!/bin/sh
+# Pre-Commit-Schutz: verhindert das versehentliche Committen von Zugangsdaten.
+# Aktivieren (einmalig pro Klon):  git config core.hooksPath .githooks
+#
+# Der Scanner prüft den Index-Stand (das, was gerade committet würde) und bricht
+# mit Exit-Code 1 ab, wenn ein echtes Key-/Token-Muster gefunden wird.
+
+if command -v node >/dev/null 2>&1; then
+  node scripts/secret-scan.mjs || {
+    echo "" >&2
+    echo "Commit abgebrochen: mögliche Zugangsdaten gefunden (siehe oben)." >&2
+    echo "Wert entfernen, Schlüssel rotieren, über Umgebungsvariablen laden." >&2
+    exit 1
+  }
+else
+  echo "Hinweis: node nicht gefunden – Secret-Scan im Pre-Commit übersprungen." >&2
+fi
