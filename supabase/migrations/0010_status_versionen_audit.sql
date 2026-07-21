@@ -83,6 +83,7 @@ revoke all on schema private from public;
 
 create or replace function private.baue_tagesbericht_snapshot(
   p_tagesbericht_id uuid,
+  p_firma_id uuid,
   p_version integer,
   p_finalisiert_am timestamptz,
   p_finalisiert_von_user_id uuid,
@@ -165,9 +166,10 @@ as $$
   join public.firmen f on f.id = t.firma_id
   left join public.profiles finalisierer on finalisierer.id = p_finalisiert_von_user_id
   where t.id = p_tagesbericht_id
+    and t.firma_id = p_firma_id
 $$;
 
-revoke all on function private.baue_tagesbericht_snapshot(uuid, integer, timestamptz, uuid, text) from public;
+revoke all on function private.baue_tagesbericht_snapshot(uuid, uuid, integer, timestamptz, uuid, text) from public;
 
 -- Bestehende atomare Schreibfunktionen härten: Firma und Benutzer werden nicht
 -- aus Client-Parametern vertraut, sondern aus dem eingeloggten Profil ermittelt.
@@ -341,6 +343,11 @@ declare
   v_status text;
   v_neuer_status text;
 begin
+  if v_user_id is null then
+    return query select false, null::text, 'nicht_gefunden'::text;
+    return;
+  end if;
+
   select firma_id into v_firma_id from public.profiles where id = v_user_id;
 
   select status into v_status
@@ -394,6 +401,11 @@ declare
   v_firma_id uuid;
   v_status text;
 begin
+  if v_user_id is null then
+    return query select false, null::text, 'nicht_gefunden'::text;
+    return;
+  end if;
+
   select firma_id into v_firma_id from public.profiles where id = v_user_id;
 
   select status into v_status
@@ -444,6 +456,11 @@ declare
   v_status text;
   v_bericht_text text;
 begin
+  if v_user_id is null then
+    return query select false, null::text, 'nicht_gefunden'::text;
+    return;
+  end if;
+
   select firma_id into v_firma_id from public.profiles where id = v_user_id;
 
   select status, bericht_text into v_status, v_bericht_text
@@ -498,6 +515,11 @@ declare
   v_finalisiert_am timestamptz := now();
   v_snapshot jsonb;
 begin
+  if v_user_id is null then
+    return query select false, null::integer, 'nicht_gefunden'::text;
+    return;
+  end if;
+
   select firma_id into v_firma_id from public.profiles where id = v_user_id;
 
   select status, bericht_text, aktuelle_version, offener_korrekturgrund
@@ -532,6 +554,7 @@ begin
 
   v_snapshot := private.baue_tagesbericht_snapshot(
     p_tagesbericht_id,
+    v_firma_id,
     v_neue_version,
     v_finalisiert_am,
     v_user_id,
@@ -583,6 +606,11 @@ declare
   v_status text;
   v_grund text := btrim(coalesce(p_grund, ''));
 begin
+  if v_user_id is null then
+    return query select false, null::text, 'nicht_gefunden'::text;
+    return;
+  end if;
+
   if char_length(v_grund) < 5 then
     return query select false, null::text, 'grund_zu_kurz'::text;
     return;
@@ -724,6 +752,7 @@ select
   1,
   private.baue_tagesbericht_snapshot(
     t.id,
+    t.firma_id,
     1,
     coalesce(t.finalisiert_am, t.updated_at, t.created_at),
     t.finalisiert_von_user_id,
