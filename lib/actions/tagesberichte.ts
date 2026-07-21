@@ -188,9 +188,12 @@ export async function updateTagesbericht(
     .from("tagesberichte")
     .select("status")
     .eq("id", id)
-    .single();
+    .maybeSingle();
 
-  if (bestehend?.status === "final") {
+  if (!bestehend) {
+    return { message: "Tagesbericht wurde nicht gefunden." };
+  }
+  if (bestehend.status === "final") {
     return {
       message: "Der Bericht ist finalisiert und kann nicht mehr bearbeitet werden.",
     };
@@ -215,7 +218,10 @@ export async function updateTagesbericht(
     return { message: "Tagesbericht konnte nicht gespeichert werden. Bitte erneut versuchen." };
   }
   if (!aktualisiert) {
-    return { message: "Der Bericht ist finalisiert und kann nicht mehr bearbeitet werden." };
+    return {
+      message:
+        "Der Bericht konnte nicht gespeichert werden. Möglicherweise wurde er zwischenzeitlich finalisiert oder ist nicht mehr verfügbar.",
+    };
   }
 
   revalidatePath("/berichte");
