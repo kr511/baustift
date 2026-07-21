@@ -50,12 +50,18 @@ export function BaustelleForm() {
             Adresse
           </label>
           <input id="adresse" name="adresse" type="text" className="field-input" />
+          {state.errors?.adresse && (
+            <p className="text-brick mt-1 text-sm">{state.errors.adresse[0]}</p>
+          )}
         </div>
         <div>
           <label htmlFor="auftraggeber" className="label-tag mb-1 block">
             Auftraggeber
           </label>
           <input id="auftraggeber" name="auftraggeber" type="text" className="field-input" />
+          {state.errors?.auftraggeber && (
+            <p className="text-brick mt-1 text-sm">{state.errors.auftraggeber[0]}</p>
+          )}
         </div>
       </div>
 
@@ -64,6 +70,9 @@ export function BaustelleForm() {
           Notiz
         </label>
         <textarea id="notiz" name="notiz" rows={2} className="field-input" />
+        {state.errors?.notiz && (
+          <p className="text-brick mt-1 text-sm">{state.errors.notiz[0]}</p>
+        )}
       </div>
 
       {state.message && state.message !== "success" && (

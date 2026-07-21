@@ -5,11 +5,21 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getUserProfil } from "@/lib/data/profile";
 
+// Muss mit ERLAUBTE_TYPEN (components/baustellen/DokumentUpload.tsx) und
+// allowed_mime_types des "baustellen-dokumente"-Buckets (Migration 0007)
+// übereinstimmen.
+const ERLAUBTE_MIME_TYPEN = [
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+] as const;
+
 const createDokumentSchema = z.object({
   baustelle_id: z.string().uuid(),
   storage_path: z.string().trim().min(1),
   dateiname: z.string().trim().min(1),
-  mime_type: z.string().trim().min(1),
+  mime_type: z.enum(ERLAUBTE_MIME_TYPEN),
   groesse_bytes: z.coerce.number().int().min(0).optional(),
 });
 
