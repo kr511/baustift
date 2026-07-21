@@ -12,7 +12,11 @@ const ERLAUBTE_TYPEN = [
   "image/jpeg",
   "image/png",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-];
+] as const;
+
+function istErlaubterTyp(typ: string): typ is (typeof ERLAUBTE_TYPEN)[number] {
+  return (ERLAUBTE_TYPEN as readonly string[]).includes(typ);
+}
 
 export function DokumentUpload({
   baustelleId,
@@ -34,7 +38,8 @@ export function DokumentUpload({
     const supabase = createClient();
 
     for (const file of Array.from(fileList)) {
-      if (!ERLAUBTE_TYPEN.includes(file.type)) {
+      const mimeType = file.type;
+      if (!istErlaubterTyp(mimeType)) {
         setError(`"${file.name}" ist kein unterstütztes Format (PDF, JPG, PNG, DOCX).`);
         continue;
       }
@@ -59,7 +64,7 @@ export function DokumentUpload({
         baustelle_id: baustelleId,
         storage_path: path,
         dateiname: file.name,
-        mime_type: file.type,
+        mime_type: mimeType,
         groesse_bytes: file.size,
       });
       if (!result.ok) {

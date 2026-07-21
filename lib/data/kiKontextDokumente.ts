@@ -9,6 +9,39 @@ export interface KiKontextErgebnis {
   ausgelassen: string[];
 }
 
+interface DokumentMitGroesse {
+  dateiname: string;
+  groesse_bytes: number | null;
+}
+
+// Reine Auswahllogik (kein I/O), separat testbar: nimmt Dokumente in
+// gegebener Reihenfolge auf, bis maxAnzahl erreicht oder maxGesamtBytes
+// überschritten würde; alles danach landet in ausgelassen.
+export function waehleKiKontextDokumente<T extends DokumentMitGroesse>(
+  dokumente: T[],
+  maxAnzahl: number,
+  maxGesamtBytes: number,
+): { ausgewaehlt: T[]; ausgelassen: string[] } {
+  const ausgewaehlt: T[] = [];
+  const ausgelassen: string[] = [];
+  let gesamtBytes = 0;
+
+  for (const dokument of dokumente) {
+    const groesse = dokument.groesse_bytes ?? 0;
+    if (
+      ausgewaehlt.length >= maxAnzahl ||
+      gesamtBytes + groesse > maxGesamtBytes
+    ) {
+      ausgelassen.push(dokument.dateiname);
+      continue;
+    }
+    ausgewaehlt.push(dokument);
+    gesamtBytes += groesse;
+  }
+
+  return { ausgewaehlt, ausgelassen };
+}
+
 // Lädt die als "Für KI-Kontext" markierten PDFs einer Baustelle, gedeckelt
 // auf max. 3 Dokumente / ~10 MB gesamt (Anthropic-Requestgröße + Kosten).
 // Ältestes zuerst, deterministisch; Auslassungen werden zurückgemeldet, damit
@@ -31,22 +64,11 @@ export async function getKiKontextDokumente(
     return { dokumente: [], ausgelassen: [] };
   }
 
-  const ausgewaehlt: typeof dokumente = [];
-  const ausgelassen: string[] = [];
-  let gesamtBytes = 0;
-
-  for (const dokument of dokumente) {
-    const groesse = dokument.groesse_bytes ?? 0;
-    if (
-      ausgewaehlt.length >= MAX_DOKUMENTE ||
-      gesamtBytes + groesse > MAX_GESAMT_BYTES
-    ) {
-      ausgelassen.push(dokument.dateiname);
-      continue;
-    }
-    ausgewaehlt.push(dokument);
-    gesamtBytes += groesse;
-  }
+  const { ausgewaehlt, ausgelassen } = waehleKiKontextDokumente(
+    dokumente,
+    MAX_DOKUMENTE,
+    MAX_GESAMT_BYTES,
+  );
 
   const geladen = await Promise.all(
     ausgewaehlt.map(async (dokument): Promise<DokumentAnhang | null> => {
