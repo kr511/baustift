@@ -36,28 +36,30 @@ export default async function NutzerVerwaltungPage() {
           <span className="label-tag mb-3 block">
             Nutzer dieser Firma ({nutzer?.length ?? 0})
           </span>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b-2 border-ink text-left">
-                <th className="label-tag py-1 font-semibold">Name</th>
-                <th className="label-tag py-1 font-semibold">Rolle</th>
-                <th className="label-tag py-1 font-semibold">Seit</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(nutzer ?? []).map((n) => (
-                <tr key={n.id} className="border-b border-line">
-                  <td className="py-1.5">{n.display_name}</td>
-                  <td className="py-1.5">
-                    {n.role === "admin" ? "Administrator" : "Nutzer"}
-                  </td>
-                  <td className="py-1.5 font-mono">
-                    {new Date(n.created_at).toLocaleDateString("de-DE")}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b-2 border-ink text-left">
+                  <th className="label-tag py-1 font-semibold">Name</th>
+                  <th className="label-tag py-1 font-semibold">Rolle</th>
+                  <th className="label-tag py-1 font-semibold">Seit</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {(nutzer ?? []).map((n) => (
+                  <tr key={n.id} className="border-b border-line">
+                    <td className="py-1.5">{n.display_name}</td>
+                    <td className="py-1.5">
+                      {n.role === "admin" ? "Administrator" : "Nutzer"}
+                    </td>
+                    <td className="py-1.5 font-mono">
+                      {new Date(n.created_at).toLocaleDateString("de-DE")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

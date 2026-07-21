@@ -101,11 +101,19 @@ export function FotoUpload({
         capture="environment"
         onChange={(e) => handleFiles(e.target.files)}
         disabled={uploading}
+        aria-label="Fotos hochladen"
         className="block w-full text-sm text-ink-soft file:mr-3 file:cursor-pointer file:border-[1.5px] file:border-ink file:bg-paper-raised file:px-3 file:py-2 file:font-mono file:text-xs file:font-semibold file:tracking-wide file:text-ink file:uppercase hover:file:bg-paper"
       />
-      {uploading && <p className="label-tag mt-2">Fotos werden hochgeladen…</p>}
+      {uploading && (
+        <p className="label-tag mt-2" role="status" aria-live="polite">
+          Fotos werden hochgeladen…
+        </p>
+      )}
       {error && (
-        <p className="border-brick bg-brick-bg text-brick mt-2 border-[1.5px] p-2 text-sm">
+        <p
+          className="border-brick bg-brick-bg text-brick mt-2 border-[1.5px] p-2 text-sm"
+          role="alert"
+        >
           {error}
         </p>
       )}
@@ -123,7 +131,7 @@ export function FotoUpload({
               <button
                 type="button"
                 onClick={() => removeFoto(foto.storage_path)}
-                className="bg-ink absolute top-1 right-1 px-1.5 py-0.5 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
+                className="bg-ink focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber absolute top-1 right-1 inline-flex min-h-11 min-w-11 items-center justify-center px-1.5 py-0.5 text-xs text-white opacity-100 transition-opacity focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                 aria-label={`${foto.dateiname} entfernen`}
               >
                 ✕

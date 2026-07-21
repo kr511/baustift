@@ -73,10 +73,10 @@ function SubmitButton({ label }: { label: string }) {
   );
 }
 
-function FeldFehler({ messages }: { messages?: string[] }) {
+function FeldFehler({ id, messages }: { id?: string; messages?: string[] }) {
   if (!messages?.[0]) return null;
   return (
-    <p className="text-brick mt-1 text-sm" role="alert">
+    <p id={id} className="text-brick mt-1 text-sm" role="alert">
       {messages[0]}
     </p>
   );
@@ -274,10 +274,10 @@ export function TagesberichtForm({
             Serverdaten werden nicht automatisch überschrieben.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <button type="button" onClick={entwurfWiederherstellen} className="btn-primary min-h-10">
+            <button type="button" onClick={entwurfWiederherstellen} className="btn-primary min-h-11">
               Entwurf wiederherstellen
             </button>
-            <button type="button" onClick={entwurfVerwerfen} className="btn-secondary min-h-10">
+            <button type="button" onClick={entwurfVerwerfen} className="btn-secondary min-h-11">
               Entwurf verwerfen
             </button>
           </div>
@@ -307,6 +307,10 @@ export function TagesberichtForm({
               required
               value={werte.baustelle_id}
               onChange={(event) => aktualisiere("baustelle_id", event.target.value)}
+              aria-invalid={Boolean(state.errors?.baustelle_id?.length)}
+              aria-describedby={
+                state.errors?.baustelle_id?.length ? "baustelle_id-error" : undefined
+              }
               className="field-input"
             >
               <option value="" disabled>
@@ -318,7 +322,7 @@ export function TagesberichtForm({
                 </option>
               ))}
             </select>
-            <FeldFehler messages={state.errors?.baustelle_id} />
+            <FeldFehler id="baustelle_id-error" messages={state.errors?.baustelle_id} />
             <Link
               href="/baustellen"
               target="_blank"
@@ -339,9 +343,11 @@ export function TagesberichtForm({
               required
               value={werte.datum}
               onChange={(event) => aktualisiere("datum", event.target.value)}
+              aria-invalid={Boolean(state.errors?.datum?.length)}
+              aria-describedby={state.errors?.datum?.length ? "datum-error" : undefined}
               className="field-input font-mono"
             />
-            <FeldFehler messages={state.errors?.datum} />
+            <FeldFehler id="datum-error" messages={state.errors?.datum} />
           </div>
         </div>
       </Sektion>
@@ -358,9 +364,11 @@ export function TagesberichtForm({
           value={werte.wetter}
           onChange={(event) => aktualisiere("wetter", event.target.value)}
           placeholder="z. B. Sonnig, 18 °C, leichter Wind"
+          aria-invalid={Boolean(state.errors?.wetter?.length)}
+          aria-describedby={state.errors?.wetter?.length ? "wetter-error" : undefined}
           className="field-input"
         />
-        <FeldFehler messages={state.errors?.wetter} />
+        <FeldFehler id="wetter-error" messages={state.errors?.wetter} />
       </Sektion>
 
       <Sektion nr="03" titel="Personal & Stunden">
@@ -393,13 +401,17 @@ export function TagesberichtForm({
           placeholder={
             "z. B.\n- Fundament Achse 3–5 betoniert\n- Lieferung Bewehrungsstahl verspätet\n- Elektriker hat Verteiler vorbereitet"
           }
+          aria-invalid={Boolean(state.errors?.stichpunkte?.length)}
+          aria-describedby={
+            state.errors?.stichpunkte?.length ? "stichpunkte-error" : undefined
+          }
           className="field-input"
         />
         <p className="mt-1.5 text-xs text-ink-soft">
           Kurze Stichpunkte reichen — die KI formuliert daraus den vollständigen Bericht.
           Bitte möglichst keine vollen Namen von Mitarbeitenden eintragen.
         </p>
-        <FeldFehler messages={state.errors?.stichpunkte} />
+        <FeldFehler id="stichpunkte-error" messages={state.errors?.stichpunkte} />
       </Sektion>
 
       <Sektion nr="06" titel="Fotos">

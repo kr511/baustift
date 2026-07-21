@@ -62,7 +62,7 @@ export function StilVorlagenEditor({
             className="field-input"
           />
           {state.errors?.titel?.[0] && (
-            <p className="text-brick mt-1 text-sm">{state.errors.titel[0]}</p>
+            <p className="text-brick mt-1 text-sm" role="alert">{state.errors.titel[0]}</p>
           )}
         </div>
         <div>
@@ -78,14 +78,17 @@ export function StilVorlagenEditor({
             className="field-input font-mono text-sm"
           />
           {state.errors?.beispiel_text?.[0] && (
-            <p className="text-brick mt-1 text-sm">
+            <p className="text-brick mt-1 text-sm" role="alert">
               {state.errors.beispiel_text[0]}
             </p>
           )}
         </div>
 
         {state.message && state.message !== "success" && (
-          <p className="border-brick bg-brick-bg text-brick border-[1.5px] p-3 text-sm">
+          <p
+            className="border-brick bg-brick-bg text-brick border-[1.5px] p-3 text-sm"
+            role="alert"
+          >
             {state.message}
           </p>
         )}
@@ -97,7 +100,11 @@ export function StilVorlagenEditor({
           Aktive Vorlagen: {aktiveAnzahl} — die KI nutzt maximal die{" "}
           {STIL_VORLAGEN_MAX} neuesten aktiven Vorlagen als Stil-Referenz.
         </span>
-        {feedback && <p className="text-brick mb-2 text-sm">{feedback}</p>}
+        {feedback && (
+          <p className="text-brick mb-2 text-sm" role="alert">
+            {feedback}
+          </p>
+        )}
         <ul className="divide-line divide-y-[1.5px]">
           {vorlagen.map((vorlage) => (
             <li key={vorlage.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
@@ -142,7 +149,7 @@ export function StilVorlagenEditor({
                       router.refresh();
                     });
                   }}
-                  className="text-brick text-xs underline underline-offset-2"
+                  className="text-brick focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber inline-flex min-h-11 items-center px-2 text-xs underline underline-offset-2"
                 >
                   Löschen
                 </button>

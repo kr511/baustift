@@ -32,7 +32,11 @@ export function DokumenteListe({
 
   return (
     <div className="space-y-2">
-      {feedback && <p className="text-brick text-sm">{feedback}</p>}
+      {feedback && (
+        <p className="text-brick text-sm" role="alert">
+          {feedback}
+        </p>
+      )}
       <ul className="divide-line divide-y-[1.5px]">
         {dokumente.map((dokument) => {
         const istPdf = dokument.mime_type === "application/pdf";
@@ -97,7 +101,7 @@ export function DokumenteListe({
                     router.refresh();
                   });
                 }}
-                className="text-brick text-xs underline underline-offset-2"
+                className="text-brick focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber inline-flex min-h-11 items-center px-2 text-xs underline underline-offset-2"
               >
                 Löschen
               </button>

@@ -33,7 +33,7 @@ export function BaustelleStatusSelect({
             if (!result.ok) setError(result.error ?? "Status konnte nicht gespeichert werden.");
           });
         }}
-        className="field-input font-mono w-auto py-1.5 text-xs disabled:opacity-50"
+        className="field-input font-mono min-h-11 w-auto py-1.5 text-xs disabled:opacity-50"
       >
         {Object.entries(statusLabels).map(([value, label]) => (
           <option key={value} value={value}>

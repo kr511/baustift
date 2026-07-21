@@ -115,7 +115,7 @@ export default function LandingPage() {
           <div className="mt-8 grid gap-6 lg:grid-cols-3">
             {schritte.map((schritt) => (
               <div key={schritt.nr} className="card ticked p-6">
-                <span className="font-display text-4xl font-bold text-amber">
+                <span className="font-display text-4xl font-bold text-ink">
                   {schritt.nr}
                 </span>
                 <h3 className="font-display mt-2 text-2xl font-bold">
@@ -137,7 +137,7 @@ export default function LandingPage() {
           </h2>
           <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {funktionen.map((funktion) => (
-              <div key={funktion.titel} className="card p-5">
+              <div key={funktion.titel} className="card ticked p-5">
                 <h3 className="font-display text-xl font-bold">
                   {funktion.titel}
                 </h3>

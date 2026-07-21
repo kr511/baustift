@@ -17,7 +17,7 @@ export function LogoutButton() {
     <button
       type="button"
       onClick={handleLogout}
-      className="label-tag border border-transparent px-3 py-2 text-white/50 transition-colors hover:border-amber/60 hover:text-amber"
+      className="label-tag focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber border border-transparent px-3 py-2 text-white/50 transition-colors hover:border-amber/60 hover:text-amber"
     >
       Abmelden
     </button>

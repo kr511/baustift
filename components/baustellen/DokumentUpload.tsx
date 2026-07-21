@@ -89,9 +89,16 @@ export function DokumentUpload({
         disabled={uploading}
         className="block w-full text-sm text-ink-soft file:mr-3 file:cursor-pointer file:border-[1.5px] file:border-ink file:bg-paper-raised file:px-3 file:py-2 file:font-mono file:text-xs file:font-semibold file:tracking-wide file:text-ink file:uppercase hover:file:bg-paper"
       />
-      {uploading && <p className="label-tag mt-2">Dokument wird hochgeladen…</p>}
+      {uploading && (
+        <p className="label-tag mt-2" role="status" aria-live="polite">
+          Dokument wird hochgeladen…
+        </p>
+      )}
       {error && (
-        <p className="border-brick bg-brick-bg text-brick mt-2 border-[1.5px] p-2 text-sm">
+        <p
+          className="border-brick bg-brick-bg text-brick mt-2 border-[1.5px] p-2 text-sm"
+          role="alert"
+        >
           {error}
         </p>
       )}

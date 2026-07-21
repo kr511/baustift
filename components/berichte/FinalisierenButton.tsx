@@ -85,6 +85,19 @@ export function FinalisierenButton({
 
   return (
     <div className="space-y-2">
+      <button
+        type="button"
+        disabled={isPending}
+        onClick={handleFinalisieren}
+        className="bg-safety-green inline-flex items-center justify-center gap-2 border-[1.5px] border-ink px-[1.15rem] py-[0.6rem] font-mono text-[0.8125rem] font-semibold tracking-[0.06em] text-white uppercase transition-opacity hover:opacity-90 disabled:opacity-50"
+      >
+        {isPending ? "Wird finalisiert…" : "Finalisieren"}
+      </button>
+      {error && (
+        <p className="text-brick max-w-xs text-sm" role="alert">
+          {error}
+        </p>
+      )}
       {status === "entwurf" && (
         <p className="max-w-xs text-xs text-ink-soft">
           Erstelle oder speichere zuerst einen Berichtstext. Danach kann der Inhalt geprüft werden.

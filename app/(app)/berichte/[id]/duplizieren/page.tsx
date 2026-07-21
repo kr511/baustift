@@ -24,7 +24,7 @@ export default async function TagesberichtDuplizierenPage({
           Der ursprüngliche Bericht bleibt unverändert.
         </p>
 
-        <div className="card mt-6 p-4">
+        <div className="card ticked mt-6 p-4">
           <p className="font-semibold text-ink">
             {bericht.baustelle?.name ?? "Unbekannte Baustelle"}
           </p>

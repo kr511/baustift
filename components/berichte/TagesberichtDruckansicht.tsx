@@ -27,7 +27,7 @@ export function TagesberichtDruckansicht({
     (bericht.status === "final" ? bericht.aktuelle_version : 0);
 
   return (
-    <article className="mx-auto max-w-3xl bg-white p-10 text-ink print:p-0">
+    <article className="mx-auto max-w-3xl bg-white p-5 text-ink sm:p-10 print:p-0">
       <div className="hazard-rule mb-6 print:mb-4" />
 
       <header className="flex items-end justify-between border-b-2 border-ink pb-4">
@@ -85,6 +85,13 @@ export function TagesberichtDruckansicht({
       {bericht.personal.length > 0 && (
         <section className="mt-6 break-inside-avoid">
           <h2 className="label-tag">Personal &amp; Stunden</h2>
+          <div className="overflow-x-auto">
+            <table className="mt-2 w-full text-sm">
+              <thead>
+                <tr className="border-b-2 border-ink text-left">
+                  <th className="label-tag py-1 font-semibold">Name</th>
+                  <th className="label-tag py-1 font-semibold">Stunden</th>
+                  <th className="label-tag py-1 font-semibold">Tätigkeit</th>
           <table className="mt-2 w-full text-sm">
             <thead>
               <tr className="border-b-2 border-ink text-left">
@@ -100,15 +107,31 @@ export function TagesberichtDruckansicht({
                   <td className="py-1.5 font-mono">{person.stunden}</td>
                   <td className="py-1.5">{person.taetigkeit ?? "–"}</td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {bericht.personal.map((p, i) => (
+                  <tr key={i} className="border-b border-line">
+                    <td className="py-1.5">{p.name}</td>
+                    <td className="py-1.5 font-mono">{p.stunden}</td>
+                    <td className="py-1.5">{p.taetigkeit ?? "–"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
       )}
 
       {bericht.material.length > 0 && (
         <section className="mt-6 break-inside-avoid">
           <h2 className="label-tag">Material &amp; Geräte</h2>
+          <div className="overflow-x-auto">
+            <table className="mt-2 w-full text-sm">
+              <thead>
+                <tr className="border-b-2 border-ink text-left">
+                  <th className="label-tag py-1 font-semibold">Typ</th>
+                  <th className="label-tag py-1 font-semibold">Bezeichnung</th>
+                  <th className="label-tag py-1 font-semibold">Menge</th>
           <table className="mt-2 w-full text-sm">
             <thead>
               <tr className="border-b-2 border-ink text-left">
@@ -126,9 +149,18 @@ export function TagesberichtDruckansicht({
                   <td className="py-1.5">{eintrag.bezeichnung}</td>
                   <td className="py-1.5 font-mono">{eintrag.menge ?? "–"}</td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {bericht.material.map((m, i) => (
+                  <tr key={i} className="border-b border-line">
+                    <td className="py-1.5">{m.typ === "geraet" ? "Gerät" : "Material"}</td>
+                    <td className="py-1.5">{m.bezeichnung}</td>
+                    <td className="py-1.5 font-mono">{m.menge ?? "–"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
       )}
 

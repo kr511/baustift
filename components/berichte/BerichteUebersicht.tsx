@@ -24,7 +24,10 @@ export async function BerichteUebersicht({ baustelleId }: BerichteUebersichtProp
 
   if (error) {
     return (
-      <p className="border-brick bg-brick-bg text-brick border-[1.5px] p-4 text-sm">
+      <p
+        className="border-brick bg-brick-bg text-brick border-[1.5px] p-4 text-sm"
+        role="alert"
+      >
         Tagesberichte konnten nicht geladen werden: {error.message}
       </p>
     );

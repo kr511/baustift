@@ -41,19 +41,24 @@ export function NameForm({ displayName }: { displayName: string }) {
           Baustellen. Bereits erstellte Berichte behalten den alten Namen.
         </p>
         {state.errors?.display_name?.[0] && (
-          <p className="text-brick mt-1 text-sm">
+          <p className="text-brick mt-1 text-sm" role="alert">
             {state.errors.display_name[0]}
           </p>
         )}
       </div>
 
       {state.message && state.message !== "success" && (
-        <p className="border-brick bg-brick-bg text-brick border-[1.5px] p-3 text-sm">
+        <p
+          className="border-brick bg-brick-bg text-brick border-[1.5px] p-3 text-sm"
+          role="alert"
+        >
           {state.message}
         </p>
       )}
       {state.message === "success" && (
-        <p className="text-safety-green text-sm">Name gespeichert.</p>
+        <p className="text-safety-green text-sm" role="status" aria-live="polite">
+          Name gespeichert.
+        </p>
       )}
 
       <NameSubmitButton />
@@ -133,12 +138,17 @@ export function PasswortForm() {
       </div>
 
       {error && (
-        <p className="border-brick bg-brick-bg text-brick border-[1.5px] p-3 text-sm">
+        <p
+          className="border-brick bg-brick-bg text-brick border-[1.5px] p-3 text-sm"
+          role="alert"
+        >
           {error}
         </p>
       )}
       {gespeichert && (
-        <p className="text-safety-green text-sm">Passwort geändert.</p>
+        <p className="text-safety-green text-sm" role="status" aria-live="polite">
+          Passwort geändert.
+        </p>
       )}
 
       <button type="submit" disabled={pending} className="btn-primary">
