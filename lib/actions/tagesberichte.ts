@@ -4,6 +4,10 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getUserProfil } from "@/lib/data/profile";
+import {
+  istTagesberichtWorkflowStatus,
+  type TagesberichtWorkflowStatus,
+} from "@/lib/types/tagesbericht-workflow";
 
 const berichtIdSchema = z.string().uuid();
 
@@ -180,19 +184,18 @@ export async function updateTagesbericht(
   if (!zeilen.success) return zeilen.state;
 
   const supabase = await createClient();
-
-  // Frühe, verständliche Rückmeldung; die RPC prüft den Status zusätzlich
-  // atomar, damit zwischen dieser Abfrage und dem Schreiben nichts durchrutscht.
   const { data: bestehend } = await supabase
     .from("tagesberichte")
     .select("status")
     .eq("id", id)
-    .single();
+    .maybeSingle();
 
-  if (bestehend?.status === "final") {
+  if (!bestehend) {
+    return { message: "Tagesbericht wurde nicht gefunden." };
+  }
+  if (bestehend.status === "final") {
     return {
-      message:
-        "Der Bericht ist finalisiert und kann nicht mehr bearbeitet werden.",
+      message: "Der Bericht ist finalisiert und kann nicht mehr bearbeitet werden.",
     };
   }
 
@@ -215,7 +218,10 @@ export async function updateTagesbericht(
     return { message: "Tagesbericht konnte nicht gespeichert werden. Bitte erneut versuchen." };
   }
   if (!aktualisiert) {
-    return { message: "Der Bericht ist finalisiert und kann nicht mehr bearbeitet werden." };
+    return {
+      message:
+        "Der Bericht konnte nicht gespeichert werden. Möglicherweise wurde er zwischenzeitlich finalisiert oder ist nicht mehr verfügbar.",
+    };
   }
 
   revalidatePath("/berichte");
@@ -223,83 +229,172 @@ export async function updateTagesbericht(
   return { success: true, redirectTo: `/berichte/${id}` };
 }
 
-export interface BerichtTextSpeichernResult {
+interface WorkflowRpcResult {
+  ok: boolean;
+  neuer_status?: string | null;
+  version?: number | null;
+  fehler?: string | null;
+}
+
+interface UntypedRpcClient {
+  rpc(
+    name: string,
+    args: Record<string, unknown>,
+  ): Promise<{ data: unknown; error: { message: string } | null }>;
+}
+
+function ersteRpcZeile(data: unknown): WorkflowRpcResult | null {
+  if (!Array.isArray(data) || !data[0] || typeof data[0] !== "object") return null;
+  return data[0] as WorkflowRpcResult;
+}
+
+function statusAusRpc(wert: string | null | undefined): TagesberichtWorkflowStatus | undefined {
+  return istTagesberichtWorkflowStatus(wert) ? wert : undefined;
+}
+
+export interface BerichtWorkflowResult {
   ok: boolean;
   error?: string;
+  status?: TagesberichtWorkflowStatus;
+  version?: number;
+}
+
+async function workflowRpc(
+  name: string,
+  args: Record<string, unknown>,
+): Promise<{ result: WorkflowRpcResult | null; technicalError?: string }> {
+  const supabase = await createClient();
+  const untyped = supabase as unknown as UntypedRpcClient;
+  const { data, error } = await untyped.rpc(name, args);
+  if (error) return { result: null, technicalError: error.message };
+  return { result: ersteRpcZeile(data) };
+}
+
+function revalidiereBericht(id: string) {
+  revalidatePath(`/berichte/${id}`);
+  revalidatePath(`/berichte/${id}/bearbeiten`);
+  revalidatePath("/berichte");
 }
 
 export async function updateBerichtText(
   id: string,
   berichtText: string,
-): Promise<BerichtTextSpeichernResult> {
+): Promise<BerichtWorkflowResult> {
   if (!berichtIdSchema.safeParse(id).success) {
     return { ok: false, error: "Ungültiger Tagesbericht." };
   }
 
-  const supabase = await createClient();
-  const { data: bestehend, error: bestehendError } = await supabase
-    .from("tagesberichte")
-    .select("status")
-    .eq("id", id)
-    .single();
+  const { result, technicalError } = await workflowRpc("speichere_tagesbericht_text", {
+    p_tagesbericht_id: id,
+    p_bericht_text: berichtText,
+  });
 
-  if (bestehendError || !bestehend) {
-    return { ok: false, error: "Tagesbericht wurde nicht gefunden." };
+  if (technicalError || !result) {
+    if (technicalError) console.error("updateBerichtText fehlgeschlagen:", technicalError);
+    return { ok: false, error: "Bericht konnte nicht gespeichert werden. Bitte erneut versuchen." };
   }
-  if (bestehend.status === "final") {
+  if (!result.ok) {
     return {
       ok: false,
-      error: "Der Bericht ist finalisiert und kann nicht mehr geändert werden.",
+      error:
+        result.fehler === "finalisiert"
+          ? "Der Bericht ist finalisiert und kann nicht mehr geändert werden."
+          : "Tagesbericht wurde nicht gefunden.",
     };
   }
 
-  // Der Statusfilter schützt auch gegen eine zeitgleiche Finalisierung nach
-  // der obigen Prüfung.
-  const { data: gespeichert, error } = await supabase
-    .from("tagesberichte")
-    .update({ bericht_text: berichtText })
-    .eq("id", id)
-    .eq("status", "entwurf")
-    .select("id")
-    .maybeSingle();
-
-  if (error || !gespeichert) {
-    if (error) console.error("updateBerichtText fehlgeschlagen:", error);
-    return {
-      ok: false,
-      error: "Bericht konnte nicht gespeichert werden, weil er inzwischen finalisiert wurde.",
-    };
-  }
-
-  revalidatePath(`/berichte/${id}`);
-  return { ok: true };
+  revalidiereBericht(id);
+  return { ok: true, status: statusAusRpc(result.neuer_status) };
 }
 
-export async function finalisiereTagesbericht(
-  id: string,
-): Promise<BerichtTextSpeichernResult> {
+export async function pruefeTagesbericht(id: string): Promise<BerichtWorkflowResult> {
   if (!berichtIdSchema.safeParse(id).success) {
     return { ok: false, error: "Ungültiger Tagesbericht." };
   }
 
-  const supabase = await createClient();
-  const { data: finalisiert, error } = await supabase
-    .from("tagesberichte")
-    .update({ status: "final" })
-    .eq("id", id)
-    .eq("status", "entwurf")
-    .select("id")
-    .maybeSingle();
+  const { result, technicalError } = await workflowRpc("pruefe_tagesbericht", {
+    p_tagesbericht_id: id,
+  });
 
-  if (error || !finalisiert) {
-    if (error) console.error("finalisiereTagesbericht fehlgeschlagen:", error);
-    return {
-      ok: false,
-      error: "Tagesbericht konnte nicht finalisiert werden. Bitte Seite aktualisieren und erneut versuchen.",
-    };
+  if (technicalError || !result) {
+    if (technicalError) console.error("pruefeTagesbericht fehlgeschlagen:", technicalError);
+    return { ok: false, error: "Prüfstatus konnte nicht gespeichert werden." };
+  }
+  if (!result.ok) {
+    const error =
+      result.fehler === "finalisiert"
+        ? "Der Bericht ist bereits finalisiert."
+        : result.fehler === "nicht_pruefbar"
+          ? "Erstelle oder speichere zuerst einen Berichtstext."
+          : "Tagesbericht wurde nicht gefunden.";
+    return { ok: false, error };
   }
 
-  revalidatePath(`/berichte/${id}`);
-  revalidatePath("/berichte");
-  return { ok: true };
+  revalidiereBericht(id);
+  return { ok: true, status: statusAusRpc(result.neuer_status) };
+}
+
+export async function finalisiereTagesbericht(id: string): Promise<BerichtWorkflowResult> {
+  if (!berichtIdSchema.safeParse(id).success) {
+    return { ok: false, error: "Ungültiger Tagesbericht." };
+  }
+
+  const { result, technicalError } = await workflowRpc("finalisiere_tagesbericht", {
+    p_tagesbericht_id: id,
+  });
+
+  if (technicalError || !result) {
+    if (technicalError) console.error("finalisiereTagesbericht fehlgeschlagen:", technicalError);
+    return { ok: false, error: "Tagesbericht konnte nicht finalisiert werden." };
+  }
+  if (!result.ok) {
+    const error =
+      result.fehler === "nicht_geprueft"
+        ? "Der Bericht muss vor der Finalisierung als geprüft markiert werden."
+        : result.fehler === "text_leer"
+          ? "Ein leerer Bericht kann nicht finalisiert werden."
+          : "Tagesbericht wurde nicht gefunden.";
+    return { ok: false, error };
+  }
+
+  revalidiereBericht(id);
+  return {
+    ok: true,
+    status: "final",
+    version: typeof result.version === "number" ? result.version : undefined,
+  };
+}
+
+export async function erstelleKorrekturversion(
+  id: string,
+  grund: string,
+): Promise<BerichtWorkflowResult> {
+  if (!berichtIdSchema.safeParse(id).success) {
+    return { ok: false, error: "Ungültiger Tagesbericht." };
+  }
+
+  const { result, technicalError } = await workflowRpc(
+    "erstelle_tagesbericht_korrektur",
+    {
+      p_tagesbericht_id: id,
+      p_grund: grund,
+    },
+  );
+
+  if (technicalError || !result) {
+    if (technicalError) console.error("erstelleKorrekturversion fehlgeschlagen:", technicalError);
+    return { ok: false, error: "Korrekturversion konnte nicht erstellt werden." };
+  }
+  if (!result.ok) {
+    const error =
+      result.fehler === "grund_zu_kurz"
+        ? "Bitte gib einen konkreten Korrekturgrund mit mindestens fünf Zeichen an."
+        : result.fehler === "nicht_final"
+          ? "Nur finalisierte Berichte können als Korrekturversion geöffnet werden."
+          : "Tagesbericht wurde nicht gefunden.";
+    return { ok: false, error };
+  }
+
+  revalidiereBericht(id);
+  return { ok: true, status: statusAusRpc(result.neuer_status) };
 }
