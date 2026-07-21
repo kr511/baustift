@@ -40,7 +40,7 @@ export function NutzerEinladenForm() {
             className="field-input"
           />
           {state.errors?.email?.[0] && (
-            <p className="text-brick mt-1 text-sm">{state.errors.email[0]}</p>
+            <p className="text-brick mt-1 text-sm" role="alert">{state.errors.email[0]}</p>
           )}
         </div>
         <div>
@@ -56,7 +56,7 @@ export function NutzerEinladenForm() {
             className="field-input"
           />
           {state.errors?.display_name?.[0] && (
-            <p className="text-brick mt-1 text-sm">
+            <p className="text-brick mt-1 text-sm" role="alert">
               {state.errors.display_name[0]}
             </p>
           )}
@@ -74,12 +74,15 @@ export function NutzerEinladenForm() {
       </div>
 
       {state.message && state.message !== "success" && (
-        <p className="border-brick bg-brick-bg text-brick border-[1.5px] p-3 text-sm">
+        <p
+          className="border-brick bg-brick-bg text-brick border-[1.5px] p-3 text-sm"
+          role="alert"
+        >
           {state.message}
         </p>
       )}
       {state.message === "success" && (
-        <p className="text-safety-green text-sm">
+        <p className="text-safety-green text-sm" role="status" aria-live="polite">
           Einladung gesendet. Die Person erhält eine E-Mail mit einem Link zum
           Festlegen des Passworts.
         </p>

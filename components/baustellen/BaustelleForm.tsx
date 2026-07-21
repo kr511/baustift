@@ -40,7 +40,7 @@ export function BaustelleForm() {
           className="field-input"
         />
         {state.errors?.name && (
-          <p className="text-brick mt-1 text-sm">{state.errors.name[0]}</p>
+          <p className="text-brick mt-1 text-sm" role="alert">{state.errors.name[0]}</p>
         )}
       </div>
 
@@ -67,7 +67,10 @@ export function BaustelleForm() {
       </div>
 
       {state.message && state.message !== "success" && (
-        <p className="border-brick bg-brick-bg text-brick border-[1.5px] p-3 text-sm">
+        <p
+          className="border-brick bg-brick-bg text-brick border-[1.5px] p-3 text-sm"
+          role="alert"
+        >
           {state.message}
         </p>
       )}
