@@ -138,6 +138,12 @@ body {
     outline-offset: 1px;
   }
 
+  .btn-primary:focus-visible,
+  .btn-secondary:focus-visible {
+    outline: 2px solid var(--color-amber);
+    outline-offset: 2px;
+  }
+
   .btn-primary {
     display: inline-flex;
     align-items: center;
