@@ -62,7 +62,7 @@ export function MaterialListEditor({
             <button
               type="button"
               onClick={() => onChange(zeilen.filter((_, i) => i !== index))}
-              className="border-line hover:border-brick hover:text-brick min-h-11 min-w-11 shrink-0 border-[1.5px] px-3 text-ink-soft transition-colors"
+              className="border-line hover:border-brick hover:text-brick focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber min-h-11 min-w-11 shrink-0 border-[1.5px] px-3 text-ink-soft transition-colors"
               aria-label={`Material oder Gerät ${index + 1} entfernen`}
             >
               ✕
@@ -73,7 +73,7 @@ export function MaterialListEditor({
       <button
         type="button"
         onClick={() => onChange([...zeilen, leereZeile()])}
-        className="label-tag hover:bg-amber hover:text-amber-ink hover:border-ink mt-3 min-h-11 border border-transparent px-3 py-1"
+        className="label-tag hover:bg-amber hover:text-amber-ink hover:border-ink focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber mt-3 min-h-11 border border-transparent px-3 py-1"
       >
         + Material/Gerät hinzufügen
       </button>
