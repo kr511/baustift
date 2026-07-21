@@ -56,11 +56,12 @@ export async function inviteNutzer(
 
   if (error) {
     console.error("inviteNutzer fehlgeschlagen:", error);
+    // Immer dieselbe Meldung, unabhängig vom Fehlergrund: auth.users ist
+    // global über alle Firmen, ein spezifischer "existiert bereits"-Hinweis
+    // würde einem Admin erlauben, firmenübergreifend E-Mail-Adressen auf
+    // Kontoexistenz zu prüfen (User-Enumeration).
     return {
-      message:
-        error.code === "email_exists"
-          ? "Für diese E-Mail-Adresse existiert bereits ein Konto."
-          : "Einladung konnte nicht gesendet werden. Bitte erneut versuchen.",
+      message: "Einladung konnte nicht gesendet werden. Bitte erneut versuchen.",
     };
   }
 
