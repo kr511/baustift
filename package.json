@@ -9,7 +9,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "security:secrets": "node scripts/secret-scan.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",

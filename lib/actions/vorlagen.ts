@@ -81,6 +81,7 @@ export async function setVorlageAktiv(
     .from("stil_vorlagen")
     .update({ aktiv: validated.data.aktiv })
     .eq("id", validated.data.id)
+    .eq("firma_id", profil.firmaId)
     .select("id")
     .maybeSingle();
   if (error || !data) {
@@ -104,6 +105,7 @@ export async function deleteStilVorlage(id: string): Promise<VorlageActionResult
     .from("stil_vorlagen")
     .delete()
     .eq("id", id)
+    .eq("firma_id", profil.firmaId)
     .select("id")
     .maybeSingle();
   if (error || !data) {

@@ -1,12 +1,25 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getTagesberichtVollstaendig } from "@/lib/data/tagesberichte";
+import {
+  getTagesberichtAudit,
+  getTagesberichtVersionen,
+  getTagesberichtVollstaendig,
+} from "@/lib/data/tagesberichte";
 import { formatDatum } from "@/lib/format";
 import { StatusBadge } from "@/components/berichte/StatusBadge";
 import { KiGenerateButton } from "@/components/berichte/KiGenerateButton";
 import { FinalisierenButton } from "@/components/berichte/FinalisierenButton";
 import { PdfDownloadButton } from "@/components/berichte/PdfDownloadButton";
 import { BerichtFinalisierungProvider } from "@/components/berichte/BerichtFinalisierungContext";
+import { BerichtVerlauf } from "@/components/berichte/BerichtVerlauf";
+
+function formatZeitpunkt(value: string) {
+  return new Intl.DateTimeFormat("de-DE", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Europe/Berlin",
+  }).format(new Date(value));
+}
 
 export default async function TagesberichtDetailPage({
   params,
@@ -14,7 +27,11 @@ export default async function TagesberichtDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const bericht = await getTagesberichtVollstaendig(id);
+  const [bericht, versionen, audit] = await Promise.all([
+    getTagesberichtVollstaendig(id),
+    getTagesberichtVersionen(id),
+    getTagesberichtAudit(id),
+  ]);
 
   if (!bericht) notFound();
 
@@ -28,14 +45,30 @@ export default async function TagesberichtDetailPage({
               <h1 className="font-display mt-1 text-4xl leading-none font-bold tracking-tight">
                 {bericht.baustelle?.name ?? "Unbekannte Baustelle"}
               </h1>
-              <div className="mt-2.5 flex items-center gap-2">
+              <div className="mt-2.5 flex flex-wrap items-center gap-2">
                 <StatusBadge status={bericht.status} />
                 {bericht.created_by && (
                   <span className="font-mono text-xs text-ink-soft">
                     von {bericht.created_by}
                   </span>
                 )}
+                {bericht.aktuelle_version > 0 && (
+                  <span className="tag-badge border-line bg-paper text-ink">
+                    Version {bericht.aktuelle_version}
+                  </span>
+                )}
               </div>
+              {bericht.status === "final" && bericht.finalisiert_am && (
+                <p className="mt-2 text-xs text-ink-soft">
+                  Finalisiert am {formatZeitpunkt(bericht.finalisiert_am)}
+                  {bericht.finalisiert_von ? ` durch ${bericht.finalisiert_von}` : ""}
+                </p>
+              )}
+              {bericht.offener_korrekturgrund && bericht.status !== "final" && (
+                <p className="border-amber bg-paper-raised mt-3 max-w-xl border-[1.5px] p-2 text-sm">
+                  Korrektur in Arbeit: {bericht.offener_korrekturgrund}
+                </p>
+              )}
             </div>
             <div className="flex flex-wrap gap-2">
               <Link
@@ -44,12 +77,12 @@ export default async function TagesberichtDetailPage({
               >
                 Als Vorlage
               </Link>
-              {bericht.status === "entwurf" && (
+              {bericht.status !== "final" && (
                 <Link
                   href={`/berichte/${bericht.id}/bearbeiten`}
                   className="btn-secondary min-h-11"
                 >
-                  Bearbeiten
+                  Eckdaten bearbeiten
                 </Link>
               )}
               <Link
@@ -59,9 +92,22 @@ export default async function TagesberichtDetailPage({
                 Druckansicht
               </Link>
               <PdfDownloadButton berichtId={bericht.id} />
-              {bericht.status === "entwurf" && (
-                <FinalisierenButton tagesberichtId={bericht.id} />
-              )}
+            </div>
+          </div>
+
+          <div className="card mt-5 p-4">
+            <span className="label-tag">Workflow</span>
+            <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
+              <div className="text-sm text-ink-soft">
+                <p>1. Berichtstext erstellen oder bearbeiten</p>
+                <p>2. Inhalt fachlich prüfen</p>
+                <p>3. Unveränderliche Version finalisieren</p>
+              </div>
+              <FinalisierenButton
+                tagesberichtId={bericht.id}
+                status={bericht.status}
+                aktuelleVersion={bericht.aktuelle_version}
+              />
             </div>
           </div>
 
@@ -131,6 +177,12 @@ export default async function TagesberichtDetailPage({
               {bericht.stichpunkte}
             </p>
           </div>
+
+          <BerichtVerlauf
+            berichtId={bericht.id}
+            versionen={versionen}
+            audit={audit}
+          />
         </div>
       </div>
     </BerichtFinalisierungProvider>

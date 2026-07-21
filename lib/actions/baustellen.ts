@@ -6,10 +6,10 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserProfil } from "@/lib/data/profile";
 
 const baustelleSchema = z.object({
-  name: z.string().trim().min(1, "Name ist erforderlich."),
-  adresse: z.string().trim().optional(),
-  auftraggeber: z.string().trim().optional(),
-  notiz: z.string().trim().optional(),
+  name: z.string().trim().min(1, "Name ist erforderlich.").max(200, "Maximal 200 Zeichen."),
+  adresse: z.string().trim().max(300, "Maximal 300 Zeichen.").optional(),
+  auftraggeber: z.string().trim().max(300, "Maximal 300 Zeichen.").optional(),
+  notiz: z.string().trim().max(2000, "Maximal 2.000 Zeichen.").optional(),
 });
 
 export interface BaustelleFormState {
@@ -73,11 +73,17 @@ export async function setBaustelleStatus(
     return { ok: false, error: "Ungültiger Baustellenstatus." };
   }
 
+  const profil = await getUserProfil();
+  if (!profil) {
+    return { ok: false, error: "Nicht angemeldet." };
+  }
+
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("baustellen")
     .update({ status: validated.data.status })
     .eq("id", validated.data.baustelleId)
+    .eq("firma_id", profil.firmaId)
     .select("id")
     .maybeSingle();
 

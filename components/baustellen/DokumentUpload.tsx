@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { createDokument } from "@/lib/actions/dokumente";
+import { sanitizeDateiname } from "@/lib/format";
 
 const MAX_DATEIGROESSE = 20 * 1024 * 1024;
 const ERLAUBTE_TYPEN = [
@@ -11,7 +12,11 @@ const ERLAUBTE_TYPEN = [
   "image/jpeg",
   "image/png",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-];
+] as const;
+
+function istErlaubterTyp(typ: string): typ is (typeof ERLAUBTE_TYPEN)[number] {
+  return (ERLAUBTE_TYPEN as readonly string[]).includes(typ);
+}
 
 export function DokumentUpload({
   baustelleId,
@@ -33,7 +38,8 @@ export function DokumentUpload({
     const supabase = createClient();
 
     for (const file of Array.from(fileList)) {
-      if (!ERLAUBTE_TYPEN.includes(file.type)) {
+      const mimeType = file.type;
+      if (!istErlaubterTyp(mimeType)) {
         setError(`"${file.name}" ist kein unterstütztes Format (PDF, JPG, PNG, DOCX).`);
         continue;
       }
@@ -42,7 +48,7 @@ export function DokumentUpload({
         continue;
       }
 
-      const sichererName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const sichererName = sanitizeDateiname(file.name);
       const path = `${firmaId}/${baustelleId}/${crypto.randomUUID()}-${sichererName}`;
 
       const { error: uploadError } = await supabase.storage
@@ -58,11 +64,11 @@ export function DokumentUpload({
         baustelle_id: baustelleId,
         storage_path: path,
         dateiname: file.name,
-        mime_type: file.type,
+        mime_type: mimeType,
         groesse_bytes: file.size,
       });
-      if (result.message !== "success") {
-        setError(`"${file.name}" konnte nicht gespeichert werden: ${result.message ?? "Unbekannter Fehler"}`);
+      if (!result.ok) {
+        setError(`"${file.name}" konnte nicht gespeichert werden: ${result.error ?? "Unbekannter Fehler"}`);
         await supabase.storage.from("baustellen-dokumente").remove([path]);
       }
     }

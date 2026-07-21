@@ -2,9 +2,6 @@ import { Document, Page, View, Text, Image, StyleSheet } from "@react-pdf/render
 import { formatDatum } from "@/lib/format";
 import type { TagesberichtVollstaendig } from "@/lib/data/tagesberichte";
 
-// Eingebettete Fotos, bereits als Buffer geladen (siehe renderTagesberichtPdf.ts).
-// HEIC/WebP kann react-pdf nicht rendern — solche Fotos landen als
-// Hinweiszeile statt als Bild (`embeddable: false`).
 export interface PdfFoto {
   dateiname: string;
   embeddable: boolean;
@@ -33,7 +30,8 @@ const styles = StyleSheet.create({
   h1: { fontSize: 20, fontWeight: 700, marginBottom: 12 },
   metaRow: {
     flexDirection: "row",
-    gap: 24,
+    flexWrap: "wrap",
+    gap: 18,
     borderTopWidth: 1,
     borderBottomWidth: 1,
     borderColor: "#d8d2c4",
@@ -41,6 +39,13 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   metaItem: { flexDirection: "column" },
+  versionHinweis: {
+    borderWidth: 1,
+    borderColor: "#9a6700",
+    backgroundColor: "#fff8df",
+    padding: 8,
+    marginBottom: 14,
+  },
   section: { marginBottom: 14 },
   table: { marginTop: 4 },
   tableHeaderRow: {
@@ -73,6 +78,21 @@ const styles = StyleSheet.create({
   },
 });
 
+function statusLabel(status: TagesberichtVollstaendig["status"]) {
+  if (status === "final") return "Finalisiert";
+  if (status === "geprueft") return "Geprüft";
+  if (status === "generiert") return "Text erstellt";
+  return "Entwurf";
+}
+
+function zeitpunkt(value: string) {
+  return new Intl.DateTimeFormat("de-DE", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Europe/Berlin",
+  }).format(new Date(value));
+}
+
 export function TagesberichtPdf({
   bericht,
   firmaWordmark,
@@ -82,6 +102,9 @@ export function TagesberichtPdf({
   firmaWordmark: string | null;
   fotos: PdfFoto[];
 }) {
+  const version = bericht.angezeigte_version ??
+    (bericht.status === "final" ? bericht.aktuelle_version : 0);
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -90,12 +113,22 @@ export function TagesberichtPdf({
             <Text style={styles.wordmark}>{firmaWordmark ?? "BAUSTIFT"}</Text>
             <Text style={styles.labelTag}>Bautagesbericht</Text>
           </View>
-          <Text>{formatDatum(bericht.datum)}</Text>
+          <View style={{ alignItems: "flex-end" }}>
+            <Text>{formatDatum(bericht.datum)}</Text>
+            {version > 0 && <Text style={styles.labelTag}>Version {version}</Text>}
+          </View>
         </View>
 
         <Text style={styles.h1}>
           {bericht.baustelle?.name ?? "Unbekannte Baustelle"}
         </Text>
+
+        {bericht.versionsgrund && (
+          <View style={styles.versionHinweis}>
+            <Text style={styles.labelTag}>Korrektur-/Versionsgrund</Text>
+            <Text>{bericht.versionsgrund}</Text>
+          </View>
+        )}
 
         <View style={styles.metaRow}>
           <View style={styles.metaItem}>
@@ -104,12 +137,24 @@ export function TagesberichtPdf({
           </View>
           <View style={styles.metaItem}>
             <Text style={styles.labelTag}>Status</Text>
-            <Text>{bericht.status === "final" ? "Final" : "Entwurf"}</Text>
+            <Text>{statusLabel(bericht.status)}</Text>
           </View>
           {bericht.created_by && (
             <View style={styles.metaItem}>
               <Text style={styles.labelTag}>Erstellt von</Text>
               <Text>{bericht.created_by}</Text>
+            </View>
+          )}
+          {bericht.finalisiert_am && (
+            <View style={styles.metaItem}>
+              <Text style={styles.labelTag}>Finalisiert am</Text>
+              <Text>{zeitpunkt(bericht.finalisiert_am)}</Text>
+            </View>
+          )}
+          {bericht.finalisiert_von && (
+            <View style={styles.metaItem}>
+              <Text style={styles.labelTag}>Finalisiert durch</Text>
+              <Text>{bericht.finalisiert_von}</Text>
             </View>
           )}
         </View>
@@ -123,11 +168,11 @@ export function TagesberichtPdf({
                 <Text style={[styles.labelTag, styles.col2]}>Stunden</Text>
                 <Text style={[styles.labelTag, styles.col3]}>Tätigkeit</Text>
               </View>
-              {bericht.personal.map((p, i) => (
-                <View key={i} style={styles.tableRow}>
-                  <Text style={styles.col1}>{p.name}</Text>
-                  <Text style={styles.col2}>{p.stunden}</Text>
-                  <Text style={styles.col3}>{p.taetigkeit ?? "–"}</Text>
+              {bericht.personal.map((person, index) => (
+                <View key={index} style={styles.tableRow}>
+                  <Text style={styles.col1}>{person.name}</Text>
+                  <Text style={styles.col2}>{person.stunden}</Text>
+                  <Text style={styles.col3}>{person.taetigkeit ?? "–"}</Text>
                 </View>
               ))}
             </View>
@@ -143,13 +188,13 @@ export function TagesberichtPdf({
                 <Text style={[styles.labelTag, styles.col2]}>Bezeichnung</Text>
                 <Text style={[styles.labelTag, styles.col3]}>Menge</Text>
               </View>
-              {bericht.material.map((m, i) => (
-                <View key={i} style={styles.tableRow}>
+              {bericht.material.map((eintrag, index) => (
+                <View key={index} style={styles.tableRow}>
                   <Text style={styles.col1}>
-                    {m.typ === "geraet" ? "Gerät" : "Material"}
+                    {eintrag.typ === "geraet" ? "Gerät" : "Material"}
                   </Text>
-                  <Text style={styles.col2}>{m.bezeichnung}</Text>
-                  <Text style={styles.col3}>{m.menge ?? "–"}</Text>
+                  <Text style={styles.col2}>{eintrag.bezeichnung}</Text>
+                  <Text style={styles.col3}>{eintrag.menge ?? "–"}</Text>
                 </View>
               ))}
             </View>
@@ -167,12 +212,11 @@ export function TagesberichtPdf({
           <View style={styles.section} wrap={false}>
             <Text style={styles.labelTag}>Fotos</Text>
             <View style={styles.fotoGrid}>
-              {fotos.map((foto, i) =>
+              {fotos.map((foto, index) =>
                 foto.embeddable && foto.data ? (
-                  // react-pdf's Image hat kein alt-Prop (kein DOM-<img>).
                   // eslint-disable-next-line jsx-a11y/alt-text
                   <Image
-                    key={i}
+                    key={index}
                     style={styles.foto}
                     src={{
                       data: foto.data,
@@ -180,7 +224,7 @@ export function TagesberichtPdf({
                     }}
                   />
                 ) : (
-                  <View key={i} style={styles.fotoPlatzhalter}>
+                  <View key={index} style={styles.fotoPlatzhalter}>
                     <Text style={{ fontSize: 8, textAlign: "center" }}>
                       Foto &bdquo;{foto.dateiname}&ldquo; — Format in PDF
                       nicht darstellbar, siehe Online-Ansicht.

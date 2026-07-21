@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { updateBerichtText } from "@/lib/actions/tagesberichte";
 import { useBerichtFinalisierung } from "@/components/berichte/BerichtFinalisierungContext";
 
@@ -11,6 +12,7 @@ export function KiGenerateButton({
   tagesberichtId: string;
   initialBerichtText: string | null;
 }) {
+  const router = useRouter();
   const [berichtText, setBerichtText] = useState(initialBerichtText ?? "");
   const [generating, setGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -18,8 +20,6 @@ export function KiGenerateButton({
   const [hinweis, setHinweis] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savedHinweis, setSavedHinweis] = useState(false);
-  // Die Refs halten den Zustand auch zwischen Eingabe und Effect aktuell. So
-  // kann ein sehr schneller Klick auf „Finalisieren“ keine Änderung übergehen.
   const textRef = useRef(initialBerichtText ?? "");
   const dirtyRef = useRef(false);
   const generatingRef = useRef(false);
@@ -27,7 +27,6 @@ export function KiGenerateButton({
   const [dirty, setDirty] = useState(false);
   const { registriereVorbereitung } = useBerichtFinalisierung();
 
-  // Warnung, wenn mit ungespeicherten Änderungen navigiert/geschlossen wird.
   useEffect(() => {
     if (!dirty) return;
     function handleBeforeUnload(e: BeforeUnloadEvent) {
@@ -38,7 +37,6 @@ export function KiGenerateButton({
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [dirty]);
 
-  // „Gespeichert“-Badge nach kurzer Zeit ausblenden.
   useEffect(() => {
     if (!savedHinweis) return;
     const t = setTimeout(() => setSavedHinweis(false), 3000);
@@ -63,36 +61,39 @@ export function KiGenerateButton({
       const result = await updateBerichtText(tagesberichtId, textZumSpeichern);
       if (result.ok) {
         if (textRef.current !== textZumSpeichern) {
-          const error = "Der Text wurde während des Speicherns geändert. Bitte nochmals speichern.";
+          const speicherFehler =
+            "Der Text wurde während des Speicherns geändert. Bitte nochmals speichern.";
           dirtyRef.current = true;
           setDirty(true);
-          setSaveError(error);
-          return { ok: false, error };
+          setSaveError(speicherFehler);
+          return { ok: false, error: speicherFehler };
         }
         dirtyRef.current = false;
         setDirty(false);
         setSavedHinweis(true);
+        router.refresh();
         return { ok: true };
       }
 
-      const error = result.error ?? "Speichern fehlgeschlagen.";
-      setSaveError(error);
-      return { ok: false, error };
+      const speicherFehler = result.error ?? "Speichern fehlgeschlagen.";
+      setSaveError(speicherFehler);
+      return { ok: false, error: speicherFehler };
     } catch {
-      const error = "Text konnte nicht gespeichert werden. Bitte erneut versuchen.";
-      setSaveError(error);
-      return { ok: false, error };
+      const speicherFehler =
+        "Text konnte nicht gespeichert werden. Bitte erneut versuchen.";
+      setSaveError(speicherFehler);
+      return { ok: false, error: speicherFehler };
     } finally {
       savingRef.current = false;
       setIsSaving(false);
     }
-  }, [tagesberichtId]);
+  }, [router, tagesberichtId]);
 
   const vorFinalisierungVorbereiten = useCallback(async () => {
     if (generatingRef.current) {
       return {
         ok: false,
-        error: "Die KI erstellt gerade einen Bericht. Bitte erst danach finalisieren.",
+        error: "Die KI erstellt gerade einen Bericht. Bitte erst danach fortfahren.",
       };
     }
     return saveText();
@@ -129,10 +130,9 @@ export function KiGenerateButton({
       }
       textRef.current = data.berichtText;
       setBerichtText(data.berichtText);
-      // Die Route persistiert den Text bereits serverseitig – Client und DB
-      // sind damit synchron, also keine ungespeicherten Änderungen.
       dirtyRef.current = false;
       setDirty(false);
+      router.refresh();
       if (data.ausgelasseneDokumente?.length > 0) {
         setHinweis(
           `Nicht berücksichtigt (Limit erreicht): ${data.ausgelasseneDokumente.join(", ")}`,
@@ -181,7 +181,7 @@ export function KiGenerateButton({
         )}
         {savedHinweis && (
           <span className="tag-badge text-safety-green bg-safety-green-bg border-safety-green">
-            Gespeichert
+            Gespeichert – erneut prüfen
           </span>
         )}
       </div>
@@ -230,8 +230,7 @@ export function KiGenerateButton({
         />
       ) : (
         <p className="card border-dashed p-6 text-sm text-ink-soft">
-          Noch kein Bericht generiert. Der Text bleibt jederzeit manuell
-          editierbar, auch nach der KI-Generierung.
+          Noch kein Berichtstext vorhanden. Erstelle ihn mit der KI oder trage ihn manuell ein.
         </p>
       )}
     </div>

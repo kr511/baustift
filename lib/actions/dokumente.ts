@@ -5,17 +5,23 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getUserProfil } from "@/lib/data/profile";
 
+// Muss mit ERLAUBTE_TYPEN (components/baustellen/DokumentUpload.tsx) und
+// allowed_mime_types des "baustellen-dokumente"-Buckets (Migration 0007)
+// übereinstimmen.
+const ERLAUBTE_MIME_TYPEN = [
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+] as const;
+
 const createDokumentSchema = z.object({
   baustelle_id: z.string().uuid(),
   storage_path: z.string().trim().min(1),
   dateiname: z.string().trim().min(1),
-  mime_type: z.string().trim().min(1),
+  mime_type: z.enum(ERLAUBTE_MIME_TYPEN),
   groesse_bytes: z.coerce.number().int().min(0).optional(),
 });
-
-export interface DokumentFormState {
-  message?: string;
-}
 
 export interface DokumentActionResult {
   ok: boolean;
@@ -30,10 +36,10 @@ const dokumentIdSchema = z.object({
 
 export async function createDokument(
   input: z.infer<typeof createDokumentSchema>,
-): Promise<DokumentFormState> {
+): Promise<DokumentActionResult> {
   const validated = createDokumentSchema.safeParse(input);
   if (!validated.success) {
-    return { message: "Ungültige Dokumentdaten." };
+    return { ok: false, error: "Ungültige Dokumentdaten." };
   }
 
   const supabase = await createClient();
@@ -50,11 +56,11 @@ export async function createDokument(
 
   if (error) {
     console.error("createDokument fehlgeschlagen:", error);
-    return { message: "Dokument konnte nicht gespeichert werden." };
+    return { ok: false, error: "Dokument konnte nicht gespeichert werden." };
   }
 
   revalidatePath(`/baustellen/${validated.data.baustelle_id}`);
-  return { message: "success" };
+  return { ok: true };
 }
 
 export async function deleteDokument(
@@ -72,6 +78,7 @@ export async function deleteDokument(
     .from("baustelle_dokumente")
     .select("storage_path")
     .eq("id", validated.data.dokumentId)
+    .eq("baustelle_id", validated.data.baustelleId)
     .single();
 
   if (lesenError || !dokument) {
@@ -86,6 +93,7 @@ export async function deleteDokument(
     .from("baustelle_dokumente")
     .delete()
     .eq("id", validated.data.dokumentId)
+    .eq("baustelle_id", validated.data.baustelleId)
     .select("id")
     .maybeSingle();
 
@@ -124,6 +132,7 @@ export async function setKiKontext(
     .from("baustelle_dokumente")
     .update({ ki_kontext: kiKontext })
     .eq("id", validated.data.dokumentId)
+    .eq("baustelle_id", validated.data.baustelleId)
     .select("id")
     .maybeSingle();
 
