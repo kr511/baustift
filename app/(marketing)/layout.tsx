@@ -33,13 +33,13 @@ export default function MarketingLayout({
           <nav className="flex items-center gap-1 text-sm">
             <a
               href="#funktionen"
-              className="label-tag border border-transparent px-3 py-2 text-white/80 transition-colors hover:border-amber/60 hover:text-amber"
+              className="label-tag focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber border border-transparent px-3 py-2 text-white/80 transition-colors hover:border-amber/60 hover:text-amber"
             >
               Funktionen
             </a>
             <a
               href="#download"
-              className="label-tag border border-transparent px-3 py-2 text-white/80 transition-colors hover:border-amber/60 hover:text-amber"
+              className="label-tag focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber border border-transparent px-3 py-2 text-white/80 transition-colors hover:border-amber/60 hover:text-amber"
             >
               Download
             </a>
@@ -60,25 +60,25 @@ export default function MarketingLayout({
           <nav className="flex flex-wrap items-center gap-4">
             <Link
               href="/impressum"
-              className="label-tag text-white/80 transition-colors hover:text-amber"
+              className="label-tag focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber text-white/80 transition-colors hover:text-amber"
             >
               Impressum
             </Link>
             <Link
               href="/datenschutz"
-              className="label-tag text-white/80 transition-colors hover:text-amber"
+              className="label-tag focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber text-white/80 transition-colors hover:text-amber"
             >
               Datenschutz
             </Link>
             <Link
               href="/nutzungsbedingungen"
-              className="label-tag text-white/80 transition-colors hover:text-amber"
+              className="label-tag focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber text-white/80 transition-colors hover:text-amber"
             >
               Nutzungsbedingungen
             </Link>
             <a
               href={`mailto:${CONTACT_EMAIL}`}
-              className="label-tag text-white/80 transition-colors hover:text-amber"
+              className="label-tag focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber text-white/80 transition-colors hover:text-amber"
             >
               {CONTACT_EMAIL}
             </a>

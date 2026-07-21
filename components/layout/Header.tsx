@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { BaustiftMark } from "@/components/layout/BaustiftMark";
 
@@ -21,6 +24,8 @@ export function Header({
   firmaWordmark: string | null;
   isAdmin: boolean;
 }) {
+  const pathname = usePathname();
+
   return (
     <div className="print:hidden">
       <div className="hazard-rule" />
@@ -42,7 +47,8 @@ export function Header({
               <Link
                 key={item.href}
                 href={item.href}
-                className="label-tag border border-transparent px-3 py-2 text-white/80 transition-colors hover:border-amber/60 hover:text-amber"
+                aria-current={pathname === item.href ? "page" : undefined}
+                className="label-tag focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber border border-transparent px-3 py-2 text-white/80 transition-colors hover:border-amber/60 hover:text-amber"
               >
                 {item.label}
               </Link>
