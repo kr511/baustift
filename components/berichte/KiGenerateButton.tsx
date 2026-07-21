@@ -187,16 +187,26 @@ export function KiGenerateButton({
       </div>
 
       {error && (
-        <p className="border-brick bg-brick-bg text-brick border-[1.5px] p-3 text-sm">
+        <p
+          className="border-brick bg-brick-bg text-brick border-[1.5px] p-3 text-sm"
+          role="alert"
+        >
           {error}
         </p>
       )}
       {saveError && (
-        <p className="border-brick bg-brick-bg text-brick border-[1.5px] p-3 text-sm">
+        <p
+          className="border-brick bg-brick-bg text-brick border-[1.5px] p-3 text-sm"
+          role="alert"
+        >
           {saveError}
         </p>
       )}
-      {hinweis && <p className="text-xs text-ink-soft">{hinweis}</p>}
+      {hinweis && (
+        <p className="text-xs text-ink-soft" role="status" aria-live="polite">
+          {hinweis}
+        </p>
+      )}
 
       {berichtText ? (
         <textarea

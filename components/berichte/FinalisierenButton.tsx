@@ -43,7 +43,11 @@ export function FinalisierenButton({ tagesberichtId }: { tagesberichtId: string 
       >
         {isPending ? "Wird finalisiert…" : "Finalisieren"}
       </button>
-      {error && <p className="text-brick max-w-xs text-sm">{error}</p>}
+      {error && (
+        <p className="text-brick max-w-xs text-sm" role="alert">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
