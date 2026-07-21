@@ -72,6 +72,7 @@ export async function deleteDokument(
     .from("baustelle_dokumente")
     .select("storage_path")
     .eq("id", validated.data.dokumentId)
+    .eq("baustelle_id", validated.data.baustelleId)
     .single();
 
   if (lesenError || !dokument) {
@@ -86,6 +87,7 @@ export async function deleteDokument(
     .from("baustelle_dokumente")
     .delete()
     .eq("id", validated.data.dokumentId)
+    .eq("baustelle_id", validated.data.baustelleId)
     .select("id")
     .maybeSingle();
 
@@ -124,6 +126,7 @@ export async function setKiKontext(
     .from("baustelle_dokumente")
     .update({ ki_kontext: kiKontext })
     .eq("id", validated.data.dokumentId)
+    .eq("baustelle_id", validated.data.baustelleId)
     .select("id")
     .maybeSingle();
 

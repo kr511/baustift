@@ -37,13 +37,15 @@ export async function updateDisplayName(
   // Bewusst nur display_name — die RLS-Policy erlaubt zwar Updates auf der
   // eigenen Zeile, das Spalten-Whitelisting (keine role-/firma-Änderung)
   // passiert hier.
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("profiles")
     .update({ display_name: validated.data })
-    .eq("id", user.id);
+    .eq("id", user.id)
+    .select("id")
+    .maybeSingle();
 
-  if (error) {
-    console.error("updateDisplayName fehlgeschlagen:", error);
+  if (error || !data) {
+    if (error) console.error("updateDisplayName fehlgeschlagen:", error);
     return { message: "Name konnte nicht gespeichert werden." };
   }
 

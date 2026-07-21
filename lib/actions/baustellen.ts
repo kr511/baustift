@@ -73,11 +73,17 @@ export async function setBaustelleStatus(
     return { ok: false, error: "Ungültiger Baustellenstatus." };
   }
 
+  const profil = await getUserProfil();
+  if (!profil) {
+    return { ok: false, error: "Nicht angemeldet." };
+  }
+
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("baustellen")
     .update({ status: validated.data.status })
     .eq("id", validated.data.baustelleId)
+    .eq("firma_id", profil.firmaId)
     .select("id")
     .maybeSingle();
 
