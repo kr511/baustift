@@ -71,7 +71,10 @@ export function PasswortZuruecksetzenForm() {
       </div>
 
       {error && (
-        <p className="border-brick bg-brick-bg text-brick border-[1.5px] p-3 text-sm">
+        <p
+          className="border-brick bg-brick-bg text-brick border-[1.5px] p-3 text-sm"
+          role="alert"
+        >
           {error}
         </p>
       )}

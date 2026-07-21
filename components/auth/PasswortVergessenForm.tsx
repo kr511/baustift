@@ -36,7 +36,7 @@ export function PasswortVergessenForm() {
 
   if (gesendet) {
     return (
-      <p className="text-sm text-ink-soft">
+      <p className="text-sm text-ink-soft" role="status" aria-live="polite">
         Falls ein Konto mit dieser E-Mail-Adresse existiert, wurde ein Link zum
         Zurücksetzen des Passworts gesendet. Bitte Posteingang prüfen.
       </p>
@@ -60,7 +60,10 @@ export function PasswortVergessenForm() {
       </div>
 
       {error && (
-        <p className="border-brick bg-brick-bg text-brick border-[1.5px] p-3 text-sm">
+        <p
+          className="border-brick bg-brick-bg text-brick border-[1.5px] p-3 text-sm"
+          role="alert"
+        >
           {error}
         </p>
       )}
